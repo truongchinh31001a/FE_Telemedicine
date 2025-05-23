@@ -1,0 +1,165 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import dayjs from 'dayjs';
+
+import UserPanel from '@/components/layout/user/UserPanel';
+import UserInfo from '@/components/layout/user/UserInfo';
+import PatientForm from '@/components/layout/user/PatientForm';
+
+export default function PatientUserPage() {
+  const { t, i18n } = useTranslation();
+  const [mounted, setMounted] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState();
+
+  // Lấy token từ cookie
+  const getAuthTokenFromCookie = () => {
+    if (typeof document === 'undefined') return null;
+    const match = document.cookie.match(/token=([^;]+)/);
+    return match?.[1] ?? null;
+  };
+
+  // Map danh sách bệnh nhân
+  const mapPatient = (p) => ({
+    UserID: p.PatientID,
+    FullName: p.FullName,
+    avatar: p.Image ? `http://192.168.1.199:3000/uploads/${p.Image}` : null,
+  });
+
+  // Map chi tiết bệnh nhân
+  const mapPatientDetail = (d) => ({
+    UserID: d.UserInfoID,
+    FullName: d.FullName,
+    DateOfBirth: d.DateOfBirth,
+    Phone: d.Phone,
+    Address: d.Address,
+    Gender: d.Gender,
+    Job: d.PatientJob,
+    CCCD: d.CCCD,
+    CCCDIssueDate: d.CCCDIssueDate,
+    CCCDIssuePlace: d.CCCDIssuePlace ?? d.Hometown,
+    CCCDExpiredDate: d.CCCDExpiredDate,
+    Ethnicity: d.Ethnicity,
+    Nationality: d.Nationality,
+    avatar: d.Image ? `http://192.168.1.199:3000/uploads/${d.Image}` : null,
+    CCCDFront: d.CCCDFront ? `http://192.168.1.199:3000/uploads/${d.CCCDFront}` : null,
+    CCCDBack: d.CCCDBack ? `http://192.168.1.199:3000/uploads/${d.CCCDBack}` : null,
+  });
+
+  const fetchUsers = useCallback(async () => {
+    const token = getAuthTokenFromCookie();
+    if (!token) return console.warn('⚠️ Không tìm thấy token');
+
+    try {
+      const res = await fetch('http://192.168.1.199:3000/patients', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      setUsers(Array.isArray(data) ? data.map(mapPatient) : []);
+    } catch (error) {
+      console.error('❌ Error fetching patients:', error);
+    }
+  }, []);
+
+  const handleSelectUser = async (user) => {
+    if (!user) return setSelectedUser(null);
+
+    const token = getAuthTokenFromCookie();
+    if (!token) return console.warn('⚠️ Không tìm thấy token');
+
+    try {
+      const res = await fetch(`http://192.168.1.199:3000/patients/${user.UserID}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) return console.error('❌ Lỗi khi lấy chi tiết bệnh nhân');
+
+      const detail = await res.json();
+      setSelectedUser(mapPatientDetail(detail));
+    } catch (err) {
+      console.error('❌ Lỗi gọi API patient/:id', err);
+    }
+  };
+
+  const handleAddOrUpdate = async (data) => {
+    const token = getAuthTokenFromCookie();
+    if (!token) return console.warn('⚠️ Không tìm thấy token');
+
+    const isUpdate = Boolean(selectedUser?.UserID);
+    const formatDate = (date) => (date ? dayjs(date).format('YYYY-MM-DD') : '');
+
+    const payload = {
+      FullName: data.FullName,
+      DateOfBirth: formatDate(data.DateOfBirth),
+      Gender: data.Gender,
+      Phone: data.Phone,
+      Address: data.Address,
+      Hometown: data.Hometown,
+      CCCD: data.CCCD,
+      CCCDIssueDate: formatDate(data.CCCDIssueDate),
+      CCCDIssuePlace: data.CCCDIssuePlace,
+      CCCDExpiredDate: formatDate(data.CCCDExpiredDate),
+      Nationality: data.Nationality,
+      Ethnicity: data.Ethnicity,
+      Job: data.Job,
+    };
+
+    try {
+      const res = await fetch(
+        `http://192.168.1.199:3000/patients${isUpdate ? `/${selectedUser.UserID}` : ''}`,
+        {
+          method: isUpdate ? 'PUT' : 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const resText = await res.text();
+      if (!res.ok) {
+        console.error('❌ Response status:', res.status);
+        console.error('❌ Response body:', resText);
+        throw new Error('Lỗi khi gửi dữ liệu bệnh nhân');
+      }
+
+      await fetchUsers();
+      setSelectedUser(undefined);
+    } catch (err) {
+      console.error('❌ Lỗi khi thêm/cập nhật bệnh nhân:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (i18n.isInitialized) setMounted(true);
+    else i18n.on('initialized', () => setMounted(true));
+  }, [i18n]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  if (!mounted) return null;
+
+  return (
+    <div>
+      <h1 className="text-2xl font-bold mb-4">{t('patient_user.title')}</h1>
+      <div className="flex gap-6">
+        <UserPanel users={users} onSelectUser={handleSelectUser} onReload={fetchUsers} />
+        <div className="flex-1 space-y-6">
+          {selectedUser === null ? (
+            <PatientForm onSubmit={handleAddOrUpdate} />
+          ) : selectedUser ? (
+            <UserInfo user={selectedUser} />
+          ) : (
+            <p className="text-gray-400 italic mt-4">{t('patient_user.select_prompt')}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
