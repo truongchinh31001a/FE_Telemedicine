@@ -12,7 +12,7 @@ export default function CustomControlBar({ patientId, recordId, appointmentId })
   const [openPrescription, setOpenPrescription] = useState(false); // 👈 thêm state mới
 
   useEffect(() => {
-    console.log('🧾 CustomControlBar received:', { patientId, recordId, appointmentId });
+    
   }, [patientId, recordId, appointmentId]);
 
   const items = [

@@ -30,23 +30,19 @@ export default function ExaminationForm({ onSuccess, patientId, measuredBy = 2, 
                 console.error('❌ Lỗi khi fetch danh sách thuốc:', err);
             }
         };
-
         fetchDrugs();
     }, []);
 
     useEffect(() => {
         if (initialValues && drugOptions.length > 0) {
-            console.log('📦 initialValues.prescriptions:', initialValues.prescriptions);
-            console.log('📦 drugOptions:', drugOptions);
-
             const prescriptionList = (initialValues.prescriptions || []).map((p) => {
                 let drugId = p.DrugID;
                 if (!drugId && p.DrugName) {
                     const found = drugOptions.find((d) => d.label === p.DrugName);
                     drugId = found?.value;
                 }
-
                 return {
+                    detailId: p.DetailID,
                     drugId,
                     quantity: p.Quantity,
                     unit: p.PrescribedUnit ?? p.DrugUnit,
@@ -55,27 +51,16 @@ export default function ExaminationForm({ onSuccess, patientId, measuredBy = 2, 
                     note: p.Note,
                 };
             });
-
             const preset = {
                 date: initialValues.CreatedDate ? dayjs(initialValues.CreatedDate) : dayjs(),
                 symptoms: initialValues.Symptoms,
                 icdMain: initialValues.DiagnosisCode,
                 note: initialValues.vitals?.find(v => v.label === 'Note')?.value,
-                pulse: initialValues.vitals?.find(v => v.label === 'Pulse')?.value,
                 temperature: initialValues.vitals?.find(v => v.label === 'Temperature')?.value,
-                breathRate: initialValues.vitals?.find(v => v.label === 'Respiration Rate')?.value,
                 spo2: initialValues.vitals?.find(v => v.label === 'SpO2')?.value,
-                weight: initialValues.vitals?.find(v => v.label === 'Weight')?.value,
-                height: initialValues.vitals?.find(v => v.label === 'Height')?.value,
-                bmi: initialValues.vitals?.find(v => v.label === 'BMI')?.value,
-                bsa: initialValues.vitals?.find(v => v.label === 'BSA')?.value,
-                bpMax: initialValues.vitals?.find(v => v.label === 'Blood Pressure')?.value?.split('/')?.[0],
-                bpMin: initialValues.vitals?.find(v => v.label === 'Blood Pressure')?.value?.split('/')?.[1]?.split(' ')[0],
                 prescriptionList,
                 solution: prescriptionList.length > 0 ? 'create' : 'none',
             };
-
-            console.log('✅ preset values to set in form:', preset);
             form.setFieldsValue(preset);
             setShowPrescription(preset.solution === 'create');
         }
@@ -86,9 +71,8 @@ export default function ExaminationForm({ onSuccess, patientId, measuredBy = 2, 
         if (!token) return;
 
         const {
-            pulse, temperature, breathRate, spo2,
-            weight, height, bmi, bsa, bpMin, bpMax,
-            date, symptoms, icdMain, note, solution, prescriptionList = [],
+            temperature, spo2, note,
+            date, symptoms, icdMain, solution, prescriptionList = [],
         } = values;
 
         try {
@@ -125,38 +109,46 @@ export default function ExaminationForm({ onSuccess, patientId, measuredBy = 2, 
                     RecordID: newRecordId,
                     MeasuredBy: measuredBy,
                     Note: note || '',
-                    Pulse: pulse,
-                    Temperature: temperature,
-                    RespirationRate: breathRate,
                     SpO2: spo2,
-                    Weight: weight,
-                    Height: height,
-                    BMI: bmi,
-                    BSA: bsa,
-                    BloodPressureMin: bpMin,
-                    BloodPressureMax: bpMax
+                    Temperature: temperature
                 })
             });
 
             if (solution === 'create') {
-                if (recordId) {
-                    await fetch(`http://192.168.1.199:3000/prescriptions/${recordId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    });
-                }
-
-                if (prescriptionList.length > 0) {
-                    await fetch(`http://192.168.1.199:3000/prescriptions/${newRecordId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${token}`,
-                        },
-                        body: JSON.stringify(prescriptionList),
-                    });
+                for (const item of prescriptionList) {
+                    if (item.detailId) {
+                        await fetch(`http://192.168.1.199:3000/prescriptions/detail/${recordId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({
+                                DrugID: item.drugId,
+                                unit: item.unit,
+                                quantity: item.quantity,
+                                timeOfDay: item.timeOfDay,
+                                mealTiming: item.mealTiming,
+                                note: item.note
+                            }),
+                        });
+                    } else {
+                        await fetch(`http://192.168.1.199:3000/prescriptions/${newRecordId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify([{
+                                drugId: item.drugId,
+                                unit: item.unit,
+                                quantity: item.quantity,
+                                timeOfDay: item.timeOfDay,
+                                mealTiming: item.mealTiming,
+                                note: item.note
+                            }]),
+                        });
+                    }
                 }
             }
 
@@ -174,16 +166,7 @@ export default function ExaminationForm({ onSuccess, patientId, measuredBy = 2, 
             form={form}
             onFinish={handleSubmit}
             initialValues={{ date: dayjs(), solution: 'none' }}
-            onValuesChange={(changed, all) => {
-                if (changed.height || changed.weight) {
-                    const { height, weight } = all;
-                    if (height && weight) {
-                        const heightInM = height / 100;
-                        const bmi = +(weight / (heightInM ** 2)).toFixed(1);
-                        const bsa = +(Math.sqrt((height * weight) / 3600)).toFixed(2);
-                        form.setFieldsValue({ bmi, bsa });
-                    }
-                }
+            onValuesChange={(changed) => {
                 if ('solution' in changed) {
                     setShowPrescription(changed.solution === 'create');
                 }
@@ -191,31 +174,40 @@ export default function ExaminationForm({ onSuccess, patientId, measuredBy = 2, 
         >
             <Card title="📋 Thông tin khám bệnh">
                 <div className="grid grid-cols-2 gap-4">
-                    <Form.Item label="Ngày khám" name="date"><DatePicker className="w-full" format="DD/MM/YYYY" /></Form.Item>
-                    <Form.Item label="Triệu chứng lâm sàng" name="symptoms"><TextArea rows={2} /></Form.Item>
+                    <Form.Item label="Ngày khám" name="date">
+                        <DatePicker className="w-full" format="DD/MM/YYYY" />
+                    </Form.Item>
+                    <Form.Item label="Triệu chứng lâm sàng" name="symptoms">
+                        <TextArea rows={2} />
+                    </Form.Item>
                 </div>
             </Card>
 
             <Card title="❤️ Sinh hiệu">
-                <div className="grid grid-cols-4 gap-4">
-                    <Form.Item label="Mạch (lần/phút)" name="pulse"><InputNumber className="w-full" /></Form.Item>
-                    <Form.Item label="Nhiệt độ (°C)" name="temperature"><InputNumber className="w-full" step={0.1} /></Form.Item>
-                    <Form.Item label="Nhịp thở" name="breathRate"><InputNumber className="w-full" /></Form.Item>
-                    <Form.Item label="SpO2 (%)" name="spo2"><InputNumber className="w-full" /></Form.Item>
-                    <Form.Item label="Cân nặng (kg)" name="weight"><InputNumber className="w-full" step={0.1} /></Form.Item>
-                    <Form.Item label="Chiều cao (cm)" name="height"><InputNumber className="w-full" /></Form.Item>
-                    <Form.Item label="BMI" name="bmi"><InputNumber className="w-full" step={0.1} disabled /></Form.Item>
-                    <Form.Item label="BSA" name="bsa"><InputNumber className="w-full" step={0.01} disabled /></Form.Item>
-                    <Form.Item label="HA Tối thiểu" name="bpMin"><InputNumber className="w-full" /></Form.Item>
-                    <Form.Item label="HA Tối đa" name="bpMax"><InputNumber className="w-full" /></Form.Item>
+                <div className="grid grid-cols-3 gap-4">
+                    <Form.Item label="Nhiệt độ (°C)" name="temperature">
+                        <InputNumber className="w-full" step={0.1} />
+                    </Form.Item>
+                    <Form.Item label="SpO2 (%)" name="spo2">
+                        <InputNumber className="w-full" />
+                    </Form.Item>
+                    <Form.Item label="Ghi chú" name="note">
+                        <TextArea rows={2} />
+                    </Form.Item>
                 </div>
             </Card>
 
             <Card title="🧠 Chẩn đoán">
-                <Form.Item label="ICD chính" name="icdMain"><Input /></Form.Item>
-                <Form.Item label="Ghi chú" name="note"><TextArea rows={2} /></Form.Item>
+                <Form.Item label="ICD chính" name="icdMain">
+                    <Input />
+                </Form.Item>
                 <Form.Item label="Cách giải quyết" name="solution">
-                    <Select options={[{ label: 'Không', value: 'none' }, { label: 'Tạo đơn thuốc', value: 'create' }]} />
+                    <Select
+                        options={[
+                            { label: 'Không', value: 'none' },
+                            { label: 'Tạo đơn thuốc', value: 'create' },
+                        ]}
+                    />
                 </Form.Item>
 
                 {showPrescription && (
@@ -250,22 +242,14 @@ export default function ExaminationForm({ onSuccess, patientId, measuredBy = 2, 
                                                 style={{ width: 100 }}
                                             />
                                         </Form.Item>
-                                        <Form.Item name={[name, 'mealTiming']} label="Trước/Sau ăn" className="mb-0">
-                                            <Select
-                                                options={[
-                                                    { label: 'Trước ăn', value: 'Trước ăn' },
-                                                    { label: 'Sau ăn', value: 'Sau ăn' },
-                                                ]}
-                                                style={{ width: 120 }}
-                                            />
-                                        </Form.Item>
-                                        <Form.Item name={[name, 'note']} label="Ghi chú" className="mb-0">
-                                            <Input style={{ width: 150 }} />
-                                        </Form.Item>
-                                        <Button danger onClick={() => remove(name)} type="text" className="mb-1">Xoá</Button>
+                                        <Button danger onClick={() => remove(name)} type="text" className="mb-1">
+                                            Xoá
+                                        </Button>
                                     </div>
                                 ))}
-                                <Button type="dashed" onClick={() => add()} block>+ Thêm thuốc</Button>
+                                <Button type="dashed" onClick={() => add()} block>
+                                    + Thêm thuốc
+                                </Button>
                             </div>
                         )}
                     </Form.List>

@@ -2,9 +2,10 @@
 
 import { Card, Table, Button, Spin } from 'antd';
 import { useState, useEffect, useCallback } from 'react';
-import { SolutionOutlined, PlusOutlined, EditOutlined } from '@ant-design/icons';
+import { SolutionOutlined, EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import ExaminationForm from './ExaminationForm';
+import VitalsForm from './VitalsForm.js';
+import PrescriptionForm from './PrescriptionForm.js';
 
 const getAuthTokenFromCookie = () => {
   if (typeof document === 'undefined') return null;
@@ -37,8 +38,8 @@ export default function ExaminationTab({ patientId }) {
   const [exams, setExams] = useState([]);
   const [selectedExam, setSelectedExam] = useState(null);
   const [collapsed, setCollapsed] = useState(false);
-  const [isAdding, setIsAdding] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [editingVitals, setEditingVitals] = useState(false);
+  const [editingPrescription, setEditingPrescription] = useState(false);
 
   const fetchExams = useCallback(async () => {
     if (!patientId) return;
@@ -126,6 +127,7 @@ export default function ExaminationTab({ patientId }) {
         ...exam,
         ...recordDetail,
         vitals,
+        rawVitals: vitalsData?.[0] ?? null,
         prescriptions,
         labTests,
         imagingTests,
@@ -158,35 +160,15 @@ export default function ExaminationTab({ patientId }) {
   if (loading) return <Spin />;
 
   return (
-    <div className="w-full overflow-x-auto">
-      <div className="flex gap-4 min-w-[1280px]">
+    <div className="w-full">
+      <div className="flex flex-col lg:flex-row gap-4">
+
         {!collapsed && (
-          <div className="flex-shrink-0 w-[calc(100%-810px)] max-w-[400px] space-y-4">
-            <Card
-              title={t('examination.history_title')}
-              extra={
-                <div className="flex gap-2">
-                  <Button type="text" onClick={() => setCollapsed(true)}>
-                    {t('examination.collapse') || 'Thu gọn'}
-                  </Button>
-                </div>
-              }
-            >
+          <div className="w-full lg:w-1/3 space-y-4">
+            <Card title={t('examination.history_title')} extra={<Button type="text" onClick={() => setCollapsed(true)}>{t('examination.collapse') || 'Thu gọn'}</Button>}>
               <Table
                 dataSource={exams}
-                columns={[
-                  { title: t('examination.date'), dataIndex: 'date' },
-                  { title: t('examination.method'), dataIndex: 'method' },
-                  { title: t('examination.doctor'), dataIndex: 'doctor' },
-                  {
-                    title: t('examination.detail'),
-                    render: (_, record) => (
-                      <Button type="link" onClick={() => handleSelectExam(record)}>
-                        <SolutionOutlined />
-                      </Button>
-                    ),
-                  },
-                ]}
+                columns={[{ title: t('examination.date'), dataIndex: 'date' }, { title: t('examination.method'), dataIndex: 'method' }, { title: t('examination.doctor'), dataIndex: 'doctor' }, { title: t('examination.detail'), render: (_, record) => <Button type="link" onClick={() => handleSelectExam(record)}><SolutionOutlined /></Button> }]}
                 pagination={false}
                 rowKey="id"
                 size="small"
@@ -195,66 +177,76 @@ export default function ExaminationTab({ patientId }) {
           </div>
         )}
 
-        <div className="w-[810px] min-w-0 space-y-4 overflow-x-auto">
-          {collapsed && (
-            <div className="mb-2">
-              <Button onClick={() => setCollapsed(false)}>
-                {t('examination.expand') || 'Mở lại'}
-              </Button>
-            </div>
-          )}
+        <div className="flex-1 space-y-4">
+          {collapsed && <Button onClick={() => setCollapsed(false)}>{t('examination.expand') || 'Mở lại'}</Button>}
 
-          {isAdding ? (
-            <Card title={isEditing ? 'Sửa thông tin khám bệnh' : 'Thêm thông tin khám bệnh'}>
-              <ExaminationForm
-                patientId={patientId}
-                recordId={isEditing ? selectedExam?.id : undefined}
-                initialValues={isEditing ? selectedExam : undefined}
-                onSuccess={() => {
-                  setIsAdding(false);
-                  setIsEditing(false);
-                  setSelectedExam(null);
-                  fetchExams();
-                }}
-              />
-              <div className="text-right mt-4">
-                <Button onClick={() => {
-                  setIsAdding(false);
-                  setIsEditing(false);
-                }}>Huỷ</Button>
-              </div>
-            </Card>
-          ) : selectedExam ? (
+          {selectedExam ? (
             <>
-              <Card
-                title={t('examination.detail_title')}
-                extra={<Button icon={<EditOutlined />} onClick={() => {
-                  setIsAdding(true);
-                  setIsEditing(true);
-                }}>Sửa</Button>}
-              >
+              <Card title={t('examination.detail_title')}>
                 <p>{t('examination.date')}: {selectedExam.date}</p>
                 <p>{t('examination.room')}: {selectedExam.room}</p>
                 <p>{t('examination.method')}: {selectedExam.method}</p>
                 <p>{t('examination.doctor_name')}: {selectedExam.doctor}</p>
                 <p>{t('examination.symptoms')}: {selectedExam.symptoms}</p>
-                <p>{t('examination.vitals')}:</p>
-                <ul className="pl-4 list-disc">
-                  {selectedExam.vitals?.map((v, idx) => (
-                    <li key={idx}>{v.label}: {v.value}</li>
-                  ))}
-                </ul>
               </Card>
 
-              <Card title={t('examination.prescription_title')}>
-                <Table
-                  dataSource={selectedExam.prescriptions || []}
-                  columns={prescriptionColumns}
-                  pagination={false}
-                  rowKey="DetailID"
-                  scroll={{ x: 800 }}
-                  size="small"
-                />
+              <Card title={t('examination.vitals')} extra={<Button icon={<EditOutlined />} onClick={() => setEditingVitals(true)}>Sửa</Button>}>
+                {editingVitals ? (
+                  <VitalsForm
+                    recordId={selectedExam.id}
+                    hasVitals={!!selectedExam.rawVitals}
+                    initialVitals={selectedExam.rawVitals ? {
+                      pulse: selectedExam.rawVitals.Pulse,
+                      temperature: selectedExam.rawVitals.Temperature,
+                      respirationRate: selectedExam.rawVitals.RespirationRate,
+                      spo2: selectedExam.rawVitals.SpO2,
+                      weight: selectedExam.rawVitals.Weight,
+                      height: selectedExam.rawVitals.Height,
+                      bmi: selectedExam.rawVitals.BMI,
+                      bsa: selectedExam.rawVitals.BSA,
+                      bpMin: selectedExam.rawVitals.BloodPressureMin,
+                      bpMax: selectedExam.rawVitals.BloodPressureMax,
+                      note: selectedExam.rawVitals.Note,
+                    } : {}}
+                    onSuccess={() => {
+                      setEditingVitals(false);
+                      fetchExams();
+                    }}
+                    onCancel={() => setEditingVitals(false)}
+                  />
+                ) : (
+                  <ul className="pl-4 list-disc">
+                    {selectedExam.vitals?.map((v, idx) => (
+                      <li key={idx}>{v.label}: {v.value}</li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+
+              <Card title={t('examination.prescription_title')} extra={<Button icon={<EditOutlined />} onClick={() => setEditingPrescription(true)}>Sửa</Button>}>
+                {editingPrescription ? (
+                  <PrescriptionForm
+                    recordId={selectedExam.id}
+                    appointmentId={selectedExam.appointmentId}
+                    doctorId={selectedExam.doctorId}
+                    initialPrescription={{ StartDate: selectedExam?.CreatedDate, Days: 3 }}
+                    initialList={selectedExam.prescriptions || []}
+                    onSuccess={() => {
+                      setEditingPrescription(false);
+                      fetchExams();
+                    }}
+                    onCancel={() => setEditingPrescription(false)}
+                  />
+                ) : (
+                  <Table
+                    dataSource={selectedExam.prescriptions || []}
+                    columns={prescriptionColumns}
+                    pagination={false}
+                    rowKey="DetailID"
+                    scroll={{ x: 800 }}
+                    size="small"
+                  />
+                )}
               </Card>
 
               <Card title={t('examination.lab_test_title')}>
