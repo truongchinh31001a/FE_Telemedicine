@@ -9,10 +9,12 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import isBetween from 'dayjs/plugin/isBetween';
-
+import Cookies from 'js-cookie';
 import '@ant-design/v5-patch-for-react-19';
 import AppointmentDetailModal from '@/components/layout/schedule/AppointmentDetailModal';
 import AppointmentWeekView from '@/components/layout/schedule/AppointmentWeekView';
+import { jwtDecode } from 'jwt-decode';
+import { useRouter } from 'next/navigation';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -26,7 +28,6 @@ export default function AppointmentSchedulePage() {
     const [filteredData, setFilteredData] = useState([]);
     const [todaySchedules, setTodaySchedules] = useState([]);
     const [selectedAppointment, setSelectedAppointment] = useState(null);
-
     const [loadingPage, setLoadingPage] = useState(false); // loading toàn trang
     const [todayLoading, setTodayLoading] = useState(false); // loading riêng cột lịch hôm nay
     const [actionLoading, setActionLoading] = useState(false); // loading riêng nút Approve/Reject
@@ -42,20 +43,35 @@ export default function AppointmentSchedulePage() {
     const fetchAppointments = async () => {
         try {
             setLoadingPage(true);
-            const res = await fetch('/api/appointments');
+
+            const token = Cookies.get('token');
+            if (!token) {
+                toast.error('Thiếu token đăng nhập!');
+                return;
+            }
+
+            const decoded = jwtDecode(token);
+            const staffId = decoded.staffId;
+
+            const res = await fetch(`/api/appointments/staff/${staffId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
             const data = await res.json();
             if (res.ok) {
                 setAppointments(data);
                 filterAppointments(data);
             } else {
-                toast.error('Lỗi khi tải dữ liệu lịch hẹn!');
+                toast.error('Lỗi khi tải lịch hẹn!');
             }
         } catch (error) {
             console.error(error);
             toast.error('Không thể kết nối server!');
         } finally {
             setLoadingPage(false);
-            setTodayLoading(false); // luôn tắt todayLoading sau fetch
+            setTodayLoading(false);
         }
     };
 
@@ -84,22 +100,35 @@ export default function AppointmentSchedulePage() {
 
         try {
             setActionLoading(true);
+            const token = Cookies.get('token');
+
             const res = await fetch(`/api/appointments/${appointmentId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
                 body: JSON.stringify({ status: newStatus }),
             });
+
             const result = await res.json();
 
             if (res.ok && result.success) {
-                toast.success(newStatus === 'confirmed' ? 'Đã duyệt lịch hẹn!' : 'Đã từ chối lịch hẹn!');
 
-                setTodayLoading(true); // ✅ Chỉ bật loading cột hôm nay
-
-                await fetchAppointments(); // Fetch lại dữ liệu
-                setSelectedAppointment(null); // Đóng modal
+                // ✅ Cập nhật trạng thái ngay trong state
+                const updated = appointments.map((item) =>
+                    item.AppointmentID === appointmentId
+                        ? { ...item, Status: newStatus }
+                        : item
+                );
+                setAppointments(updated);
+                filterAppointments(updated); // ✅ gọi lại lọc tuần & hôm nay
+                await fetchAppointments(); 
+                setSelectedAppointment(null);
             } else {
-                toast.success(result.message || 'Cập nhật thất bại!');
+                toast.success(result.message);
+                setSelectedAppointment(null);
+                await fetchAppointments(); // ✅ Tải lại lịch hẹn
             }
         } catch (error) {
             console.error(error);
@@ -142,8 +171,6 @@ export default function AppointmentSchedulePage() {
 
     return (
         <div className="space-y-6 relative">
-            <ToastContainer /> {/* ✅ Toast global */}
-
             {loadingPage && (
                 <div className="absolute inset-0 z-50 bg-white bg-opacity-60 flex justify-center items-center">
                     <Spin size="large" />

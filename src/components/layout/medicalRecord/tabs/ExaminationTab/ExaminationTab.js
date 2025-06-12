@@ -76,8 +76,8 @@ export default function ExaminationTab({ patientId }) {
     try {
       const token = getAuthTokenFromCookie();
 
-      const [recordDetailRes, vitalsRes, presRes, labRes, imagingRes] = await Promise.all([
-        fetch(`http://192.168.1.199:3000/medical-records/patient/${exam.id}`, {
+      const [recordListRes, vitalsRes, presRes, labRes, imagingRes] = await Promise.all([
+        fetch(`http://192.168.1.199:3000/medical-records/patient/${patientId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`http://192.168.1.199:3000/medical-records/vitals/${exam.id}`, {
@@ -94,13 +94,16 @@ export default function ExaminationTab({ patientId }) {
         }),
       ]);
 
-      const [recordDetail, vitalsData, prescriptionData, labTestsData, imagingTestsData] = await Promise.all([
-        recordDetailRes.json(),
-        vitalsRes.json(),
-        presRes.json(),
-        labRes.json(),
-        imagingRes.json(),
-      ]);
+      const [recordList, vitalsData, prescriptionData, labTestsData, imagingTestsData] =
+        await Promise.all([
+          recordListRes.json(),
+          vitalsRes.json(),
+          presRes.json(),
+          labRes.json(),
+          imagingRes.json(),
+        ]);
+
+      const recordDetail = (recordList || []).find((r) => r.RecordID === exam.id);
 
       const vitals = formatVitals(vitalsData?.[0]);
       const prescriptions = (prescriptionData || []).map((p, index) => ({ ...p, index: index + 1 }));
@@ -125,13 +128,15 @@ export default function ExaminationTab({ patientId }) {
 
       setSelectedExam({
         ...exam,
-        ...recordDetail,
+        symptoms: recordDetail?.Symptoms ?? 'Không có ghi chú',
+        diagnosisCode: recordDetail?.DiagnosisCode,
         vitals,
         rawVitals: vitalsData?.[0] ?? null,
         prescriptions,
         labTests,
         imagingTests,
       });
+
     } catch (err) {
       console.error('❌ Lỗi khi fetch chi tiết:', err);
     } finally {
@@ -168,7 +173,19 @@ export default function ExaminationTab({ patientId }) {
             <Card title={t('examination.history_title')} extra={<Button type="text" onClick={() => setCollapsed(true)}>{t('examination.collapse') || 'Thu gọn'}</Button>}>
               <Table
                 dataSource={exams}
-                columns={[{ title: t('examination.date'), dataIndex: 'date' }, { title: t('examination.method'), dataIndex: 'method' }, { title: t('examination.doctor'), dataIndex: 'doctor' }, { title: t('examination.detail'), render: (_, record) => <Button type="link" onClick={() => handleSelectExam(record)}><SolutionOutlined /></Button> }]}
+                columns={[
+                  { title: t('examination.date'), dataIndex: 'date' },
+                  { title: t('examination.method'), dataIndex: 'method' },
+                  { title: t('examination.doctor'), dataIndex: 'doctor' },
+                  {
+                    title: t('examination.detail'),
+                    render: (_, record) => (
+                      <Button type="link" onClick={() => handleSelectExam(record)}>
+                        <SolutionOutlined />
+                      </Button>
+                    ),
+                  },
+                ]}
                 pagination={false}
                 rowKey="id"
                 size="small"

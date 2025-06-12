@@ -221,7 +221,6 @@ const WorkSchedulePage = () => {
           data={filteredData}
           startDate={selectedDate}
           onSelectSchedule={(schedule) => {
-            console.log("Selected schedule:", schedule); // Log selected schedule
             setSelectedSchedule(schedule);
             setShowDetail(true);
           }}
@@ -235,7 +234,6 @@ const WorkSchedulePage = () => {
         data={selectedSchedule}
         onDelete={handleDeleteSchedule}
         onEdit={(schedule) => {
-          console.log('Edit schedule:', schedule); // Log edit schedule
         }}
       />
     </div>

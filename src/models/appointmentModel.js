@@ -17,6 +17,43 @@ export async function getStaffIDByUserID(userID) {
   return res.recordset?.[0]?.StaffID;
 }
 
+export async function getAppointmentsByStaffId(staffId) {
+  return await query(`
+    SELECT 
+      A.*, 
+      StaffInfo.FullName AS StaffName,
+      PatientInfo.FullName AS PatientName
+    FROM Appointment A
+    LEFT JOIN Staff S ON A.StaffID = S.StaffID
+    LEFT JOIN [User] StaffUser ON S.UserID = StaffUser.UserID
+    LEFT JOIN UserInfo StaffInfo ON StaffUser.UserInfoID = StaffInfo.UserInfoID
+    LEFT JOIN Patient P ON A.PatientID = P.PatientID
+    LEFT JOIN [User] PatientUser ON P.UserID = PatientUser.UserID
+    LEFT JOIN UserInfo PatientInfo ON PatientUser.UserInfoID = PatientInfo.UserInfoID
+    WHERE A.StaffID = @staffId
+    ORDER BY A.WorkDate DESC, A.StartTime DESC
+  `, { staffId });
+}
+
+
+export async function getAppointmentsByPatientId(patientId) {
+  return await query(`
+    SELECT 
+      A.*, 
+      StaffInfo.FullName AS StaffName,
+      PatientInfo.FullName AS PatientName
+    FROM Appointment A
+    LEFT JOIN Staff S ON A.StaffID = S.StaffID
+    LEFT JOIN [User] StaffUser ON S.UserID = StaffUser.UserID
+    LEFT JOIN UserInfo StaffInfo ON StaffUser.UserInfoID = StaffInfo.UserInfoID
+    LEFT JOIN Patient P ON A.PatientID = P.PatientID
+    LEFT JOIN [User] PatientUser ON P.UserID = PatientUser.UserID
+    LEFT JOIN UserInfo PatientInfo ON PatientUser.UserInfoID = PatientInfo.UserInfoID
+    WHERE A.PatientID = @patientId
+    ORDER BY A.WorkDate DESC, A.StartTime DESC
+  `, { patientId });
+}
+
 export async function isAppointmentMember(appointmentID, staffID) {
   const res = await query(
     `SELECT 1 FROM AppointmentMembers WHERE AppointmentID = @appointmentID AND StaffID = @staffID`,
