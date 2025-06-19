@@ -13,15 +13,14 @@ export default function HospitalUserPage() {
   const [mounted, setMounted] = useState(false);
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState();
+  const [isEditing, setIsEditing] = useState(false);
 
-  // Lấy token từ cookie
   const getAuthTokenFromCookie = () => {
     if (typeof document === 'undefined') return null;
     const match = document.cookie.match(/token=([^;]+)/);
     return match?.[1] ?? null;
   };
 
-  // Map thông tin chi tiết staff từ API
   const mapStaffDetail = (d) => ({
     UserID: d.StaffID,
     Username: d.Username,
@@ -80,30 +79,93 @@ export default function HospitalUserPage() {
 
       const detail = await res.json();
       setSelectedUser(mapStaffDetail(detail));
+      setIsEditing(false);
     } catch (err) {
       console.error('❌ Lỗi gọi API staff/:id', err);
     }
   };
 
-  const handleAddOrUpdate = (data) => {
+  const handleAddOrUpdate = async (data) => {
+    const token = getAuthTokenFromCookie();
+    if (!token) return console.warn('⚠️ Không tìm thấy token');
+
     const isUpdate = Boolean(selectedUser?.UserID);
+    const url = isUpdate
+      ? `http://192.168.1.199:3000/staff/${selectedUser.UserID}`
+      : 'http://192.168.1.199:3000/staff';
+    const method = isUpdate ? 'PUT' : 'POST';
 
-    if (isUpdate) {
-      const updatedList = users.map((u) =>
-        u.UserID === selectedUser.UserID ? { ...u, ...data } : u
-      );
-      setUsers(updatedList);
-    } else {
-      const newUser = {
-        ...data,
-        UserID: users.length + 1,
-        avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${data.firstName || 'A'}`,
-        joinedAt: new Date().toISOString(),
-      };
-      setUsers([newUser, ...users]);
+    try {
+      const avatarFile = data.avatar?.[0]?.originFileObj;
+      const frontFile = data.cccdFrontImage?.[0]?.originFileObj;
+      const backFile = data.cccdBackImage?.[0]?.originFileObj;
+
+      const dataWithoutFiles = { ...data };
+      delete dataWithoutFiles.avatar;
+      delete dataWithoutFiles.cccdFrontImage;
+      delete dataWithoutFiles.cccdBackImage;
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(dataWithoutFiles),
+      });
+
+      if (!res.ok) {
+        console.error(`❌ Lỗi khi ${isUpdate ? 'cập nhật' : 'tạo'} staff`);
+        return;
+      }
+
+      const result = await res.json();
+      const staffId = isUpdate ? selectedUser.UserID : result.staffId;
+
+      if (!isUpdate && staffId) {
+        const uploadFile = async (file, uploadUrl) => {
+          const formData = new FormData();
+          formData.append('file', file);
+          await fetch(uploadUrl, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData,
+          });
+        };
+
+        if (avatarFile) {
+          await uploadFile(avatarFile, `http://192.168.1.199:3012/upload/avatar/staff/${staffId}`);
+        }
+
+        if (frontFile) {
+          await uploadFile(frontFile, `http://192.168.1.199:3012/upload/cccd/front/staff/${staffId}`);
+        }
+
+        if (backFile) {
+          await uploadFile(backFile, `http://192.168.1.199:3012/upload/cccd/back/staff/${staffId}`);
+        }
+      }
+
+      if (isUpdate) {
+        const updatedList = users.map((u) =>
+          u.UserID === selectedUser.UserID ? { ...u, ...data } : u
+        );
+        setUsers(updatedList);
+      } else {
+        const newUser = {
+          ...result,
+          avatar: avatarFile
+            ? URL.createObjectURL(avatarFile)
+            : `https://api.dicebear.com/7.x/initials/svg?seed=${data.fullName || 'A'}`,
+        };
+        setUsers([newUser, ...users]);
+      }
+
+      setSelectedUser(undefined);
+      setIsEditing(false);
+    } catch (err) {
+      console.error('❌ Lỗi khi tạo/cập nhật staff hoặc upload ảnh:', err);
     }
-
-    setSelectedUser(undefined);
   };
 
   useEffect(() => {
@@ -123,11 +185,14 @@ export default function HospitalUserPage() {
       <div className="flex gap-6">
         <UserPanel users={users} onSelectUser={handleSelectUser} onReload={fetchUsers} />
         <div className="flex-1 space-y-6">
-          {selectedUser === null ? (
-            <UserForm onSubmit={handleAddOrUpdate} />
+          {selectedUser === null || isEditing ? (
+            <UserForm
+              onSubmit={handleAddOrUpdate}
+              initialValues={selectedUser}
+            />
           ) : selectedUser ? (
             <>
-              <UserInfo user={selectedUser} />
+              <UserInfo user={selectedUser} onEdit={() => setIsEditing(true)} />
               <PermissionTable />
             </>
           ) : (

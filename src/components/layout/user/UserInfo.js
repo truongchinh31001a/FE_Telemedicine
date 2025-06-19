@@ -3,13 +3,13 @@
 import { Card, Avatar, Descriptions, Button } from 'antd';
 import { UserOutlined, EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { usePathname } from 'next/navigation'; // 👈 Thêm để kiểm tra route
+import { usePathname } from 'next/navigation';
 import dayjs from 'dayjs';
 
-export default function UserInfo({ user }) {
+export default function UserInfo({ user, onEdit }) {
   const { t } = useTranslation();
   const pathname = usePathname();
-  const isHospitalUserPage = pathname?.includes('/users/hospital'); // 👈 Chỉ kiểm tra 1 lần
+  const isHospitalUserPage = pathname?.includes('/users/hospital');
 
   if (!user) return null;
 
@@ -28,7 +28,7 @@ export default function UserInfo({ user }) {
       <Card
         title={t('hospital_user.account_info')}
         extra={
-          <Button type="text" icon={<EditOutlined />} onClick={() => console.log('Edit account')} />
+          <Button type="text" icon={<EditOutlined />} onClick={() => onEdit?.(user)} />
         }
       >
         <div className="flex justify-center mb-4">
@@ -62,7 +62,7 @@ export default function UserInfo({ user }) {
       <Card
         title={t('hospital_user.user_info')}
         extra={
-          <Button type="text" icon={<EditOutlined />} onClick={() => console.log('Edit user')} />
+          <Button type="text" icon={<EditOutlined />} onClick={() => onEdit?.(user)} />
         }
       >
         <Descriptions column={1} size="small">

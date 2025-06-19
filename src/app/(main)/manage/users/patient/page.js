@@ -149,7 +149,7 @@ export default function PatientUserPage() {
     <div>
       <h1 className="text-2xl font-bold mb-4">{t('patient_user.title')}</h1>
       <div className="flex gap-6">
-        <UserPanel users={users} onSelectUser={handleSelectUser} onReload={fetchUsers} />
+        <UserPanel users={users} onSelectUser={handleSelectUser} onReload={fetchUsers} allowAdd={false} />
         <div className="flex-1 space-y-6">
           {selectedUser === null ? (
             <PatientForm onSubmit={handleAddOrUpdate} />

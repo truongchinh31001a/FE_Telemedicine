@@ -43,32 +43,32 @@ export default function MedicalHistoryTab({ patientId }) {
 
       const chronicDiseases = (raw.chronicHistory || []).map((d, i) => ({
         index: i + 1,
-        disease: d.diseaseName,
-        status: d.status,
-        doctor: `BS ${d.doctorName}`,
-        date: d.detectedDate?.split('T')[0],
-        note: d.note,
+        disease: d.DiseaseName,
+        status: d.Status,
+        doctor: `BS ${d.DoctorName}`,
+        date: d.DetectedDate?.split('T')[0],
+        note: d.Note,
         type: 'chronic',
       }));
 
       const familyDiseases = (raw.familyHistory || []).map((d, i) => ({
         index: i + 1,
-        disease: d.diseaseName,
-        relation: d.relation,
-        status: d.status,
-        doctor: `BS ${d.doctorName}`,
-        date: d.detectedDate?.split('T')[0],
-        note: d.note,
+        disease: d.DiseaseName,
+        relation: d.Relation,
+        status: d.Status,
+        doctor: `BS ${d.DoctorName}`,
+        date: d.DetectedDate?.split('T')[0],
+        note: d.Note,
         type: 'family',
       }));
 
       const allergies = (raw.allergyHistory || []).map((d, i) => ({
         index: i + 1,
-        substance: d.substance,
-        status: d.status,
-        doctor: `BS ${d.doctorName}`,
-        date: d.detectedDate?.split('T')[0],
-        note: d.note,
+        substance: d.Substance,
+        status: d.Status,
+        doctor: `BS ${d.DoctorName}`,
+        date: d.DetectedDate?.split('T')[0],
+        note: d.Note,
         type: 'allergy',
       }));
 

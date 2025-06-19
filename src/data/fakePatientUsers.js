@@ -13,7 +13,7 @@ const fakePatientUsers = [
       lastName: 'Lê',
       middleName: 'Thị',
       firstName: 'C',
-      dateOfBirth: '1985-08-20',
+      dateOfBirth: '1995-08-20',
       gender: 'Nữ',
       phone: '0912345678',
       address: 'Đà Nẵng',

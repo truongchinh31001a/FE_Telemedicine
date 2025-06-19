@@ -13,7 +13,7 @@ import '@ant-design/v5-patch-for-react-19';
 
 const pageSize = 5;
 
-export default function UserPanel({ users = [], onSelectUser, onReload }) {
+export default function UserPanel({ users = [], onSelectUser, onReload, allowAdd = true }) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,19 +41,22 @@ export default function UserPanel({ users = [], onSelectUser, onReload }) {
       {/* Nút chức năng */}
       <div className="flex justify-end gap-2">
         <Button icon={<ReloadOutlined />} type="text" onClick={onReload} />
-        <Button
-          icon={<PlusOutlined />}
-          style={{ borderColor: '#34c38f', color: '#34c38f' }}
-          onClick={() => onSelectUser?.(null)}
-        >
-          {t('hospital_user.add')}
-        </Button>
-        <Button
+        {allowAdd && (
+          <Button
+            icon={<PlusOutlined />}
+            style={{ borderColor: '#34c38f', color: '#34c38f' }}
+            onClick={() => onSelectUser?.(null)}
+          >
+            {t('hospital_user.add')}
+          </Button>
+        )}
+
+        {/* <Button
           icon={<UploadOutlined />}
           style={{ borderColor: '#027bff', color: '#027bff' }}
         >
           {t('hospital_user.import')}
-        </Button>
+        </Button> */}
       </div>
 
       {/* Tìm kiếm */}

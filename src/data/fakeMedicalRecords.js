@@ -320,7 +320,7 @@ const fakeMedicalRecords = [
             phone: '(295)110-5794',
             email: 'jenniferjohnson@hartman.info',
             cccd: '9097037074',
-            birthDate: '1986-09-08',
+            birthDate: '1996-09-08',
             gender: 'Nam',
             ethnicity: 'Kinh',
             nationality: 'Việt Nam',

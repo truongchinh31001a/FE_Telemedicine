@@ -34,7 +34,7 @@ const useAuth = () => {
     if (userID) {
       const fetchUserInfo = async () => {
         try {
-          const response = await fetch(`http://localhost:3050/api/user/${userID}`);
+          const response = await fetch(`http://localhost:3000/api/user/${userID}`);
           const data = await response.json();
 
           if (response.ok && data?.fullName) {

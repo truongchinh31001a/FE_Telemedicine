@@ -51,13 +51,12 @@ export default function ExaminationTab({ patientId }) {
       });
       const data = await res.json();
       const mapped = data.map((item) => ({
-        key: item.recordId,
-        id: item.recordId,
-        date: item.createdDate?.split('T')[0],
+        key: item.RecordID,
+        id: item.RecordID,
+        date: item.CreatedDate?.split('T')[0],
         method: 'Online',
-        doctor: item.doctorName || 'Chưa rõ',
+        doctor: item.DoctorName,
       }));
-
       setExams(mapped);
       setSelectedExam(null);
     } catch (err) {
@@ -107,17 +106,7 @@ export default function ExaminationTab({ patientId }) {
       const recordDetail = (recordList || []).find((r) => r.RecordID === exam.id);
 
       const vitals = formatVitals(vitalsData?.[0]);
-      const prescriptions = (prescriptionData || []).map((p, index) => ({
-        index: index + 1,
-        DetailID: p.detail_id,
-        DrugName: p.drug_name,
-        Concentration: p.concentration,
-        Quantity: p.quantity,
-        PrescribedUnit: p.prescribed_unit,
-        TimeOfDay: p.time_of_day,
-        MealTiming: p.meal_timing,
-      }));
-
+      const prescriptions = (prescriptionData || []).map((p, index) => ({ ...p, index: index + 1 }));
       const labTests = (labTestsData || []).map((item, index) => ({
         index: index + 1,
         name: item.TestType,
