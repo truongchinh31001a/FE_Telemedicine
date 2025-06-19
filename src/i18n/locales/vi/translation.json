@@ -13,6 +13,9 @@
     "logout": "Đăng xuất",
     "login_success": "Đăng nhập thành công!",
     "login_failed": "Đăng nhập thất bại. Vui lòng thử lại.",
+    "common": {
+        "reload": "Tải lại"
+    },
     "dashboard": {
         "home": "TRANG CHỦ",
         "welcome": "👋 Chào mừng",

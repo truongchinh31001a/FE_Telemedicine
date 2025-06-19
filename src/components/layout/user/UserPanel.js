@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Input, Avatar, Pagination } from 'antd';
+import { Button, Input, Avatar, Pagination, Tooltip } from 'antd';
 import {
   ReloadOutlined,
   PlusOutlined,
@@ -40,7 +40,19 @@ export default function UserPanel({ users = [], onSelectUser, onReload, allowAdd
     <div className="w-[410px] bg-white border border-gray-200 rounded-lg p-4 space-y-4 mt-5">
       {/* Nút chức năng */}
       <div className="flex justify-end gap-2">
-        <Button icon={<ReloadOutlined />} type="text" onClick={onReload} />
+        <div
+          onClick={onReload}
+          className="group flex items-center gap-1 cursor-pointer px-2 py-1 text-gray-600 hover:text-teal-600 transition-colors"
+        >
+          <span
+            className="overflow-hidden max-w-0 opacity-0 group-hover:max-w-[80px] group-hover:opacity-100 transition-all duration-300 whitespace-nowrap"
+          >
+            {t('common.reload')}
+          </span>
+
+          <ReloadOutlined className="text-lg" />
+        </div>
+
         {allowAdd && (
           <Button
             icon={<PlusOutlined />}

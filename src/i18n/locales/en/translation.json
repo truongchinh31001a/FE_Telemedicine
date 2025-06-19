@@ -13,6 +13,9 @@
     "logout": "Logout",
     "login_success": "Login successful!",
     "login_failed": "Login failed. Please try again.",
+    "common": {
+        "reload": "Reload"
+    },
     "dashboard": {
         "home": "HOME",
         "welcome": "👋 Welcome",
