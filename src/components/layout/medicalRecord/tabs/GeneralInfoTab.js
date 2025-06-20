@@ -80,7 +80,7 @@ export default function GeneralInfoTab({ patientId }) {
           return;
         }
 
-        const res = await fetch(`http://192.168.1.199:3000/patients/${patientId}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/patients/${patientId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

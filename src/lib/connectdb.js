@@ -1,45 +1,21 @@
-import sql from 'mssql';
+import pkg from 'pg';
+const { Pool } = pkg;
 
-const config = {
-    user: process.env.DATABASE_USER2,
-    password: process.env.DATABASE_PASSWORD2,
-    server: process.env.DATABASE_HOST2,
-    port: parseInt(process.env.DATABASE_PORT2, 10), // 👈 thêm dòng này
-    database: process.env.DATABASE_NAME2,
-    options: {
-        encrypt: false,
-        trustServerCertificate: true,
-    },
-};
+const pool = new Pool({
+  user: process.env.DATABASE_USER2,
+  host: process.env.DATABASE_HOST2,
+  database: process.env.DATABASE_NAME2,
+  password: process.env.DATABASE_PASSWORD2,
+  port: parseInt(process.env.DATABASE_PORT2, 10), // nếu bạn có cổng riêng
+  ssl: false // 👈 nếu bạn dùng SSL thì set = true hoặc cấu hình thêm
+});
 
-
-let pool;
-
-async function getPool() {
-    if (!pool) {
-        try {
-            pool = await sql.connect(config);
-        } catch (err) {
-            console.error('❌ SQL Connection Error:', err);
-            throw err;
-        }
-    }
-    return pool;
-}
-
-export async function query(sqlQuery, params = {}) {
-    const conn = await getPool();
-    const request = conn.request();
-
-    Object.entries(params).forEach(([key, value]) => {
-        request.input(key, value);
-    });
-
-    try {
-        const result = await request.query(sqlQuery);
-        return result;
-    } catch (err) {
-        console.error('❌ Query Error:', err);
-        throw err;
-    }
+export async function query(text, params = []) {
+  try {
+    const res = await pool.query(text, params);
+    return res; // res.rows là mảng kết quả
+  } catch (err) {
+    console.error('❌ PostgreSQL Query Error:', err);
+    throw err;
+  }
 }

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Phiếu Khai Báo Da Liễu</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Times New Roman", serif;
+        background-color: #ffffff;
+        color: #000;
+        padding: 40px;
+        font-size: 16px;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .header h1 {
+        font-size: 24px;
+        margin: 0;
+        font-weight: bold;
+      }
+
+      .header p {
+        margin: 4px 0;
+      }
+
+      .divider {
+        border-top: 2px solid #000;
+        margin: 20px 0;
+      }
+
+      .section-title {
+        font-weight: bold;
+        font-size: 18px;
+        margin: 20px 0 10px;
+        text-decoration: underline;
+      }
+
+      .field {
+        margin: 8px 0;
+        line-height: 1.5;
+      }
+
+      .label {
+        display: inline-block;
+        width: 220px;
+        font-weight: bold;
+      }
+
+      .footer {
+        margin-top: 60px;
+      }
+
+      .signature {
+        float: right;
+        text-align: center;
+      }
+
+      .date {
+        margin-top: 40px;
+        font-style: italic;
+      }
+
+      .clearfix::after {
+        content: "";
+        display: table;
+        clear: both;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>PHIẾU KHAI BÁO DA LIỄU</h1>
+      <p>Bệnh viện Phan Châu Trinh - Khoa Da liễu</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-title">I. Thông tin chung</div>
+    <div class="field"><span class="label">Triệu chứng chính:</span> <%= data.symptoms %></div>
+    <div class="field"><span class="label">Kéo dài:</span> <%= data.duration %></div>
+    <div class="field"><span class="label">Tiến triển:</span> <%= data.progress %></div>
+
+    <div class="section-title">II. Tiền sử và triệu chứng kèm theo</div>
+    <div class="field"><span class="label">Có lan ra chỗ khác:</span> <%= data.spreading %></div>
+    <div class="field"><span class="label">Vùng lan:</span> <%= data.spread_area %></div>
+    <div class="field"><span class="label">Từng bị tương tự:</span> <%= data.had_before %></div>
+    <div class="field"><span class="label">Lần gần nhất:</span> <%= data.last_occurrence %></div>
+    <div class="field"><span class="label">Dị ứng:</span> <%= data.allergy %></div>
+    <div class="field"><span class="label">Chi tiết dị ứng:</span> <%= data.allergy_detail %></div>
+
+    <div class="section-title">III. Tiền sử bệnh & thuốc sử dụng</div>
+    <div class="field"><span class="label">Tiền sử bệnh:</span> <%= data.medical_history %></div>
+    <div class="field"><span class="label">Đang dùng thuốc:</span> <%= data.taking_medicine %></div>
+    <div class="field"><span class="label">Tên thuốc:</span> <%= data.medicine_detail %></div>
+    <div class="field"><span class="label">Đã từng bôi thuốc:</span> <%= data.used_product %></div>
+    <div class="field"><span class="label">Tên sản phẩm:</span> <%= data.product_detail %></div>
+
+    <div class="footer clearfix">
+      <div class="date">Ngày khai báo: <%= new Date().toLocaleDateString('vi-VN') %></div>
+      <div class="signature">
+        <p>Người khai báo</p>
+        <p style="margin-top: 80px;">(Ký và ghi rõ họ tên)</p>
+      </div>
+    </div>
+  </body>
+</html>

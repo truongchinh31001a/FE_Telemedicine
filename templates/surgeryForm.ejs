@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Phiếu Khai Báo Hậu Phẫu</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Times New Roman", serif;
+        background-color: #ffffff;
+        color: #000;
+        padding: 40px;
+        font-size: 16px;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .header h1 {
+        font-size: 24px;
+        margin: 0;
+        font-weight: bold;
+      }
+
+      .header p {
+        margin: 4px 0;
+      }
+
+      .divider {
+        border-top: 2px solid #000;
+        margin: 20px 0;
+      }
+
+      .section-title {
+        font-weight: bold;
+        font-size: 18px;
+        margin: 20px 0 10px;
+        text-decoration: underline;
+      }
+
+      .field {
+        margin: 8px 0;
+        line-height: 1.5;
+      }
+
+      .label {
+        display: inline-block;
+        width: 280px;
+        font-weight: bold;
+      }
+
+      .footer {
+        margin-top: 60px;
+      }
+
+      .signature {
+        float: right;
+        text-align: center;
+      }
+
+      .date {
+        margin-top: 40px;
+        font-style: italic;
+      }
+
+      .clearfix::after {
+        content: "";
+        display: table;
+        clear: both;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>PHIẾU KHAI BÁO HẬU PHẪU</h1>
+      <p>Bệnh viện Phan Châu Trinh - Khoa Ngoại</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-title">I. Thông tin phẫu thuật</div>
+    <div class="field"><span class="label">Loại phẫu thuật:</span> <%= data.surgery_type %></div>
+    <div class="field"><span class="label">Nếu khác:</span> <%= data.surgery_other %></div>
+    <div class="field"><span class="label">Ngày phẫu thuật:</span> <%= data.surgery_date %></div>
+    <div class="field"><span class="label">Cơ sở y tế:</span> <%= data.hospital %></div>
+
+    <div class="section-title">II. Theo dõi vết mổ</div>
+    <div class="field"><span class="label">Tình trạng vết mổ:</span> <%= data.wound_status %></div>
+    <div class="field"><span class="label">Dấu hiệu kèm theo:</span> <%= data.symptoms %></div>
+    <div class="field"><span class="label">Triệu chứng khác:</span> <%= data.other_symptom %></div>
+    <div class="field"><span class="label">Mức độ đau:</span> <%= data.pain_level %></div>
+
+    <div class="section-title">III. Thuốc & chăm sóc</div>
+    <div class="field"><span class="label">Đang dùng thuốc:</span> <%= data.using_medicine %></div>
+    <div class="field"><span class="label">Tên thuốc:</span> <%= data.medicine_detail %></div>
+    <div class="field"><span class="label">Chăm sóc vết mổ:</span> <%= data.wound_care %></div>
+    <div class="field"><span class="label">Bệnh nền:</span> <%= data.comorbidities %></div>
+
+    <div class="footer clearfix">
+      <div class="date">Ngày khai báo: <%= new Date().toLocaleDateString('vi-VN') %></div>
+      <div class="signature">
+        <p>Người khai báo</p>
+        <p style="margin-top: 80px;">(Ký và ghi rõ họ tên)</p>
+      </div>
+    </div>
+  </body>
+</html>

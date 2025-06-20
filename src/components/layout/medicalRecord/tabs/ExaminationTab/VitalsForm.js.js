@@ -20,8 +20,8 @@ export default function VitalsForm({ recordId, measuredBy = 2, hasVitals = false
 
         try {
             const url = hasVitals
-                ? `http://192.168.1.199:3000/medical-records/patientvitals/${recordId}`
-                : 'http://192.168.1.199:3000/medical-records/patient/vital';
+                ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/medical-records/patientvitals/${recordId}`
+                : `${process.env.NEXT_PUBLIC_API_BASE_URL}/medical-records/patient/vital`;
 
             const method = hasVitals ? 'PUT' : 'POST';
 

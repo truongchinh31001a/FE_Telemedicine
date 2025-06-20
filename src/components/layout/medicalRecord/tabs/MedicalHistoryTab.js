@@ -35,7 +35,7 @@ export default function MedicalHistoryTab({ patientId }) {
     try {
       const token = getAuthTokenFromCookie();
       if (!token) return;
-      const res = await fetch(`http://192.168.1.199:3000/medical-records/patient/history/${patientId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/medical-records/patient/history/${patientId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

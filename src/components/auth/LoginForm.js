@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation'; // 🆕
 import '@ant-design/v5-patch-for-react-19';
-import Cookies from 'js-cookie'; 
+import Cookies from 'js-cookie';
 
 export default function LoginForm({ onForgotClick }) {
   const { t, i18n } = useTranslation();
@@ -33,7 +33,7 @@ export default function LoginForm({ onForgotClick }) {
 
     try {
       // Gửi dữ liệu đăng nhập đến API
-      const response = await fetch('http://192.168.1.199:3000/auth/login', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -42,17 +42,22 @@ export default function LoginForm({ onForgotClick }) {
           username,
           password,
         }),
+        // credentials: 'include',
       });
 
       const result = await response.json();
 
       if (response.ok) {
         const { access_token } = result;  // Giả sử API trả về token với key là 'access_token'
-        Cookies.set('token', access_token, { expires: 1,secure: true, sameSite: 'Lax' });
+        Cookies.set('token', access_token, {
+          expires: 1,
+          secure: location.protocol === 'https:',
+          sameSite: 'Lax',
+        });
         toast.success(t('login_success'));  // Chỉ thông báo thành công khi login thành công
         setTimeout(() => {
           router.push('/'); // Điều hướng sau khi login thành công
-        }, 500);  
+        }, 500);
       } else {
         toast.error(t('login_failed'));  // Nếu đăng nhập thất bại, chỉ báo lỗi
       }

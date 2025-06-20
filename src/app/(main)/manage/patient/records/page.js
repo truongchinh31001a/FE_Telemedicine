@@ -28,7 +28,7 @@ export default function PatientMedicalRecordPage() {
     if (!token) return console.warn('⚠️ Không tìm thấy token');
 
     try {
-      const res = await fetch('http://192.168.1.199:3000/patients', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/patients`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -38,7 +38,7 @@ export default function PatientMedicalRecordPage() {
       const mapped = data.map((p) => ({
         id: p.PatientID,
         name: p.FullName,
-        avatar: p.Image ? `http://192.168.1.199:3000/uploads/${p.Image}` : null,
+        avatar: p.Image ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${p.Image}` : null,
       }));
 
       setRecords(mapped);

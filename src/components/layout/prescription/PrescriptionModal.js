@@ -27,7 +27,7 @@ export default function PrescriptionModal({ open, onClose, recordId, appointment
             const token = document.cookie.match(/token=([^;]+)/)?.[1];
             if (!token) return;
             try {
-                const res = await fetch('http://192.168.1.199:3000/drug', {
+                const res = await fetch('${process.env.NEXT_PUBLIC_API_BASE_URL}/drug', {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const data = await res.json();
@@ -49,7 +49,7 @@ export default function PrescriptionModal({ open, onClose, recordId, appointment
             setLoading(true);
 
             // Step 1: Tạo treatment
-            await fetch(`http://192.168.1.199:3000/prescriptions/create-treatment/${appointmentId}`, {
+            await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/prescriptions/create-treatment/${appointmentId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -63,7 +63,7 @@ export default function PrescriptionModal({ open, onClose, recordId, appointment
 
             // Step 2: Gửi từng đơn thuốc
             for (const item of values.prescriptions || []) {
-                await fetch(`http://192.168.1.199:3000/prescriptions/${recordId}`, {
+                await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/prescriptions/${recordId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

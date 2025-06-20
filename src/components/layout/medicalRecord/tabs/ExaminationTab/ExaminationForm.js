@@ -20,7 +20,7 @@ export default function ExaminationForm({ onSuccess, patientId, measuredBy = 2, 
             try {
                 const token = document.cookie.match(/token=([^;]+)/)?.[1];
                 if (!token) return;
-                const res = await fetch('http://192.168.1.199:3000/drug', {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/drug`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const data = await res.json();

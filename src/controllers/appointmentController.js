@@ -109,9 +109,9 @@ export async function getAppointmentParticipantsWithLinks(appointmentId) {
 
   return {
     staffName,
-    staffCallLink: `http://192.168.1.199:3000/room?room=${Room}&name=${encodeURIComponent(staffName)}`,
+    staffCallLink: `${process.env.NEXT_PUBLIC_API_BASE_URL3}/room?room=${Room}&name=${encodeURIComponent(staffName)}`,
     patientName,
-    patientCallLink: `http://192.168.1.199:3000/room?room=${Room}&name=${encodeURIComponent(patientName)}`
+    patientCallLink: `${process.env.NEXT_PUBLIC_API_BASE_URL3}/room?room=${Room}&name=${encodeURIComponent(patientName)}`
   };
 }
 

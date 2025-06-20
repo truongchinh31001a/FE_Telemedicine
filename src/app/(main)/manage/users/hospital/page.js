@@ -39,7 +39,7 @@ export default function HospitalUserPage() {
     ManagedBy: d.DepartmentName,
     Ethnicity: d.Ethnicity,
     Nationality: d.Nationality,
-    avatar: d.Image ? `http://192.168.1.199:3000/uploads/${d.Image}` : null,
+    avatar: d.Image ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${d.Image}` : null,
   });
 
   const fetchUsers = useCallback(async () => {
@@ -47,7 +47,7 @@ export default function HospitalUserPage() {
     if (!token) return console.warn('⚠️ Không tìm thấy token');
 
     try {
-      const res = await fetch('http://192.168.1.199:3000/staff', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/staff`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -56,7 +56,7 @@ export default function HospitalUserPage() {
         ? data.map((s) => ({
             UserID: s.StaffID,
             FullName: s.FullName,
-            avatar: s.Image ? `http://192.168.1.199:3000/uploads/${s.Image}` : null,
+            avatar: s.Image ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${s.Image}` : null,
           }))
         : []);
     } catch (err) {
@@ -71,7 +71,7 @@ export default function HospitalUserPage() {
     if (!token) return console.warn('⚠️ Không tìm thấy token');
 
     try {
-      const res = await fetch(`http://192.168.1.199:3000/staff/${user.UserID}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/staff/${user.UserID}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -91,8 +91,8 @@ export default function HospitalUserPage() {
 
     const isUpdate = Boolean(selectedUser?.UserID);
     const url = isUpdate
-      ? `http://192.168.1.199:3000/staff/${selectedUser.UserID}`
-      : 'http://192.168.1.199:3000/staff';
+      ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/staff/${selectedUser.UserID}`
+      : `${process.env.NEXT_PUBLIC_API_BASE_URL}/staff`;
     const method = isUpdate ? 'PUT' : 'POST';
 
     try {
@@ -134,15 +134,15 @@ export default function HospitalUserPage() {
         };
 
         if (avatarFile) {
-          await uploadFile(avatarFile, `http://192.168.1.199:3012/upload/avatar/staff/${staffId}`);
+          await uploadFile(avatarFile, `${process.env.NEXT_PUBLIC_API_BASE_URL2}/upload/avatar/staff/${staffId}`);
         }
 
         if (frontFile) {
-          await uploadFile(frontFile, `http://192.168.1.199:3012/upload/cccd/front/staff/${staffId}`);
+          await uploadFile(frontFile, `${process.env.NEXT_PUBLIC_API_BASE_URL2}/upload/cccd/front/staff/${staffId}`);
         }
 
         if (backFile) {
-          await uploadFile(backFile, `http://192.168.1.199:3012/upload/cccd/back/staff/${staffId}`);
+          await uploadFile(backFile, `${process.env.NEXT_PUBLIC_API_BASE_URL2}/upload/cccd/back/staff/${staffId}`);
         }
       }
 

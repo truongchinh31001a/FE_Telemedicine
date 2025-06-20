@@ -16,19 +16,19 @@ const getAuthTokenFromCookie = () => {
 const formatVitals = (vital) => {
   if (!vital) return [];
   return [
-    { label: 'Pulse', value: vital.Pulse },
-    { label: 'Temperature', value: vital.Temperature },
-    { label: 'Respiration Rate', value: vital.RespirationRate },
-    { label: 'SpO2', value: vital.SpO2 },
-    { label: 'Weight', value: vital.Weight },
-    { label: 'Height', value: vital.Height },
-    { label: 'BMI', value: vital.BMI },
-    { label: 'BSA', value: vital.BSA },
+    { label: 'Pulse', value: vital.pulse },
+    { label: 'Temperature', value: vital.temperature },
+    { label: 'Respiration Rate', value: vital.respiration_rate },
+    { label: 'SpO2', value: vital.spo2 },
+    { label: 'Weight', value: vital.weight },
+    { label: 'Height', value: vital.height },
+    { label: 'BMI', value: vital.bmi },
+    { label: 'BSA', value: vital.bsa },
     {
       label: 'Blood Pressure',
-      value: `${vital.BloodPressureMax}/${vital.BloodPressureMin} mmHg`,
+      value: `${vital.blood_pressure_max}/${vital.blood_pressure_min} mmHg`,
     },
-    { label: 'Note', value: vital.Note },
+    { label: 'Note', value: vital.note },
   ];
 };
 
@@ -46,19 +46,19 @@ export default function ExaminationTab({ patientId }) {
     setLoading(true);
     try {
       const token = getAuthTokenFromCookie();
-      const res = await fetch(`http://192.168.1.199:3000/medical-records/records/${patientId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/medical-records/records/${patientId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      const mapped = data.map((item) => ({
-        key: item.recordId,
-        id: item.recordId,
-        date: item.createdDate?.split('T')[0],
-        method: 'Online',
-        doctor: item.doctorName || 'Chưa rõ',
-      }));
-
-      setExams(mapped);
+      setExams(
+        data.map((item) => ({
+          key: item.recordId,
+          id: item.recordId,
+          date: item.createdDate?.split('T')[0],
+          method: 'Online',
+          doctor: item.doctorName || 'Chưa rõ',
+        }))
+      );
       setSelectedExam(null);
     } catch (err) {
       console.error('❌ Lỗi khi fetch examination records:', err);
@@ -76,38 +76,36 @@ export default function ExaminationTab({ patientId }) {
     setLoading(true);
     try {
       const token = getAuthTokenFromCookie();
-
       const [recordListRes, vitalsRes, presRes, labRes, imagingRes] = await Promise.all([
-        fetch(`http://192.168.1.199:3000/medical-records/patient/${patientId}`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/medical-records/patient/${patientId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`http://192.168.1.199:3000/medical-records/patient/vitals/${exam.id}`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/medical-records/patient/vitals/${exam.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`http://192.168.1.199:3000/prescriptions/${exam.id}`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/prescriptions/${exam.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`http://192.168.1.199:3000/lab-tests/${exam.id}`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/lab-tests/${exam.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`http://192.168.1.199:3000/imaging-tests/${exam.id}`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/imaging-tests/${exam.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
 
-      const [recordList, vitalsData, prescriptionData, labTestsData, imagingTestsData] =
-        await Promise.all([
-          recordListRes.json(),
-          vitalsRes.json(),
-          presRes.json(),
-          labRes.json(),
-          imagingRes.json(),
-        ]);
+      const [recordList, vitalsData, prescriptionData, labTestsData, imagingTestsData] = await Promise.all([
+        recordListRes.json(),
+        vitalsRes.json(),
+        presRes.json(),
+        labRes.json(),
+        imagingRes.json(),
+      ]);
 
-      const recordDetail = (recordList || []).find((r) => r.RecordID === exam.id);
+      const recordDetail = recordList.find((r) => r.RecordID === exam.id);
 
       const vitals = formatVitals(vitalsData?.[0]);
-      const prescriptions = (prescriptionData || []).map((p, index) => ({
+      const prescriptions = prescriptionData.map((p, index) => ({
         index: index + 1,
         DetailID: p.detail_id,
         DrugName: p.drug_name,
@@ -118,22 +116,25 @@ export default function ExaminationTab({ patientId }) {
         MealTiming: p.meal_timing,
       }));
 
-      const labTests = (labTestsData || []).map((item, index) => ({
+      const labTests = labTestsData.map((item, index) => ({
+        key: `lab-${item.lab_test_id}`,
         index: index + 1,
-        name: item.TestType,
-        code: `LAB-${item.LabTestID}`,
-        note: item.Result,
-        attachment: item.FilePath ? (
-          <a href={item.FilePath} target="_blank" rel="noopener noreferrer">File</a>
+        name: item.test_type,
+        code: `LAB-${item.lab_test_id}`,
+        note: item.result,
+        attachment: item.file_path ? (
+          <a href={item.file_path} target="_blank" rel="noopener noreferrer">File</a>
         ) : null,
       }));
-      const imagingTests = (imagingTestsData || []).map((item, index) => ({
+
+      const imagingTests = imagingTestsData.map((item, index) => ({
+        key: `img-${item.imaging_test_id}`,
         index: index + 1,
-        name: item.TestType,
-        code: `IMG-${item.ImagingTestID}`,
-        note: item.Result,
-        attachment: item.FilePath ? (
-          <a href={item.FilePath} target="_blank" rel="noopener noreferrer">File</a>
+        name: item.test_type,
+        code: `IMG-${item.imaging_test_id}`,
+        note: item.result,
+        attachment: item.file_path ? (
+          <a href={item.file_path} target="_blank" rel="noopener noreferrer">File</a>
         ) : null,
       }));
 
@@ -147,7 +148,6 @@ export default function ExaminationTab({ patientId }) {
         labTests,
         imagingTests,
       });
-
     } catch (err) {
       console.error('❌ Lỗi khi fetch chi tiết:', err);
     } finally {

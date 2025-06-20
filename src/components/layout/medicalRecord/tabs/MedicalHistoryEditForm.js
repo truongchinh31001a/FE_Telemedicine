@@ -27,7 +27,7 @@ export default function MedicalHistoryEditForm({
             const token = document.cookie.match(/token=([^;]+)/)?.[1];
             if (!token) return;
 
-            const res = await fetch(`http://192.168.1.199:3000/medical-records/history/${type}/${patientId}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/medical-records/history/${type}/${patientId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

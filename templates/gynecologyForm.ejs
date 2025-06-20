@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Phiếu Khai Báo Phụ Khoa</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Times New Roman", serif;
+        background-color: #ffffff;
+        color: #000;
+        padding: 40px;
+        font-size: 16px;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .header h1 {
+        font-size: 24px;
+        margin: 0;
+        font-weight: bold;
+      }
+
+      .header p {
+        margin: 4px 0;
+      }
+
+      .divider {
+        border-top: 2px solid #000;
+        margin: 20px 0;
+      }
+
+      .section-title {
+        font-weight: bold;
+        font-size: 18px;
+        margin: 20px 0 10px;
+        text-decoration: underline;
+      }
+
+      .field {
+        margin: 8px 0;
+        line-height: 1.5;
+      }
+
+      .label {
+        display: inline-block;
+        width: 260px;
+        font-weight: bold;
+      }
+
+      .footer {
+        margin-top: 60px;
+      }
+
+      .signature {
+        float: right;
+        text-align: center;
+      }
+
+      .date {
+        margin-top: 40px;
+        font-style: italic;
+      }
+
+      .clearfix::after {
+        content: "";
+        display: table;
+        clear: both;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>PHIẾU KHAI BÁO PHỤ KHOA</h1>
+      <p>Bệnh viện Phan Châu Trinh - Khoa Sản phụ khoa</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-title">I. Triệu chứng chính</div>
+    <div class="field"><span class="label">Triệu chứng:</span> <%= data.symptoms %></div>
+    <div class="field"><span class="label">Triệu chứng khác:</span> <%= data.other_symptom %></div>
+    <div class="field"><span class="label">Kéo dài:</span> <%= data.duration %></div>
+
+    <div class="section-title">II. Khí hư & kinh nguyệt</div>
+    <div class="field"><span class="label">Tính chất khí hư:</span> <%= data.discharge %></div>
+    <div class="field"><span class="label">Kinh nguyệt gần nhất:</span> <%= data.last_period %></div>
+    <div class="field"><span class="label">Chu kỳ kinh đều:</span> <%= data.cycle_regular %></div>
+    <div class="field"><span class="label">Nghi ngờ có thai:</span> <%= data.pregnant %></div>
+
+    <div class="section-title">III. Tránh thai & khám trước đó</div>
+    <div class="field"><span class="label">Sử dụng tránh thai:</span> <%= data.contraceptive_use %></div>
+    <div class="field"><span class="label">Phương pháp tránh thai:</span> <%= data.contraceptive_detail %></div>
+    <div class="field"><span class="label">Đã từng khám phụ khoa:</span> <%= data.recent_exam %></div>
+    <div class="field"><span class="label">Ngày khám gần nhất:</span> <%= data.recent_exam_date %></div>
+
+    <div class="section-title">IV. Tiền sử phụ khoa</div>
+    <div class="field"><span class="label">Tiền sử phụ khoa:</span> <%= data.gynecology_history %></div>
+    <div class="field"><span class="label">Chi tiết tiền sử:</span> <%= data.gynecology_detail %></div>
+    <div class="field"><span class="label">Đã xét nghiệm phụ khoa:</span> <%= data.test_done %></div>
+    <div class="field"><span class="label">Chi tiết xét nghiệm:</span> <%= data.test_detail %></div>
+
+    <div class="footer clearfix">
+      <div class="date">Ngày khai báo: <%= new Date().toLocaleDateString('vi-VN') %></div>
+      <div class="signature">
+        <p>Người khai báo</p>
+        <p style="margin-top: 80px;">(Ký và ghi rõ họ tên)</p>
+      </div>
+    </div>
+  </body>
+</html>

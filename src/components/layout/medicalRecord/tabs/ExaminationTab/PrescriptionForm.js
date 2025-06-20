@@ -14,7 +14,7 @@ export default function PrescriptionForm({ recordId, appointmentId, initialPresc
         const fetchDrugs = async () => {
             const token = document.cookie.match(/token=([^;]+)/)?.[1];
             if (!token) return;
-            const res = await fetch('http://192.168.1.199:3000/drug', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/drug`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = await res.json();
@@ -48,7 +48,7 @@ export default function PrescriptionForm({ recordId, appointmentId, initialPresc
         const token = document.cookie.match(/token=([^;]+)/)?.[1];
         if (!token || !detailId) return;
         try {
-            await fetch(`http://192.168.1.199:3000/prescriptions/detail/${detailId}`, {
+            await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/prescriptions/detail/${detailId}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -68,7 +68,7 @@ export default function PrescriptionForm({ recordId, appointmentId, initialPresc
             let currentRecordId = recordId;
 
             if (!currentRecordId && appointmentId) {
-                const res = await fetch(`http://192.168.1.199:3000/prescriptions/create-treatment/${appointmentId}`, {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/prescriptions/create-treatment/${appointmentId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ export default function PrescriptionForm({ recordId, appointmentId, initialPresc
             }
 
             if (currentRecordId) {
-                await fetch(`http://192.168.1.199:3000/prescriptions/${currentRecordId}`, {
+                await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/prescriptions/${currentRecordId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ export default function PrescriptionForm({ recordId, appointmentId, initialPresc
                 .map(p => ({ ...p, drugId: p.drugId?.value }));
 
             if (updateList.length > 0) {
-                await fetch('http://192.168.1.199:3000/prescriptions/details', {
+                await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/prescriptions/details`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
