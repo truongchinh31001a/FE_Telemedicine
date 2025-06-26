@@ -17,19 +17,11 @@ export default function PatientMedicalRecordPage() {
     else i18n.on('initialized', () => setMounted(true));
   }, [i18n]);
 
-  const getAuthTokenFromCookie = () => {
-    if (typeof document === 'undefined') return null;
-    const match = document.cookie.match(/token=([^;]+)/);
-    return match?.[1] ?? null;
-  };
-
   const fetchRecords = useCallback(async () => {
-    const token = getAuthTokenFromCookie();
-    if (!token) return console.warn('⚠️ Không tìm thấy token');
-
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/patients`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await fetch('/api/proxy/patients', {
+        method: 'GET',
+        credentials: 'include', // gửi cookie chứa token
       });
 
       const data = await res.json();
@@ -38,7 +30,9 @@ export default function PatientMedicalRecordPage() {
       const mapped = data.map((p) => ({
         id: p.PatientID,
         name: p.FullName,
-        avatar: p.Image ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${p.Image}` : null,
+        avatar: p.Image
+          ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${p.Image}`
+          : null,
       }));
 
       setRecords(mapped);
@@ -57,7 +51,6 @@ export default function PatientMedicalRecordPage() {
     <div className="overflow-x-auto">
       <h1 className="text-2xl font-bold mb-4">{t('medical_record.title')}</h1>
       <div className="flex gap-6">
-        {/* Bên trái: danh sách hồ sơ */}
         <MedicalRecordPanel
           records={records}
           onSelectRecord={(r) => {
@@ -66,8 +59,6 @@ export default function PatientMedicalRecordPage() {
           }}
           selectedId={selectedRecord?.id}
         />
-
-        {/* Bên phải: tab thông tin */}
         <div className="flex-1">
           {selectedRecord ? (
             <MedicalRecordTab record={selectedRecord} />

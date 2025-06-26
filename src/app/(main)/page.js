@@ -1,136 +1,172 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import '@ant-design/v5-patch-for-react-19';
-import { Spin, Card } from 'antd';
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell,
-} from 'recharts';
+import { DatePicker, Card, Table, Avatar } from 'antd';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
+import { ArrowUpOutlined, ArrowDownOutlined, UserOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 
-export default function HomePage() {
-  const { t, i18n } = useTranslation();
+const { RangePicker } = DatePicker;
+
+export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    if (i18n.isInitialized) {
-      setMounted(true);
-    } else {
-      i18n.on('initialized', () => setMounted(true));
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  const stats = [
+    { title: 'Tổng số ca khám từ xa', value: 120, status: 'up' },
+    { title: 'Thời gian chờ trung bình', value: '15 phút', status: 'down' },
+    { title: 'Mức độ hài lòng trung bình', value: '4.2/5', status: 'up' },
+    { title: 'Lịch khám hôm nay', value: 23, status: 'down' },
+  ];
+
+  const barData = [
+    { hour: '07:00', daLieu: 2, hauPhau: 1, phuKhoa: 0, khac: 1 },
+    { hour: '08:00', daLieu: 4, hauPhau: 2, phuKhoa: 1, khac: 0 },
+    { hour: '09:00', daLieu: 3, hauPhau: 1, phuKhoa: 2, khac: 1 },
+    { hour: '10:00', daLieu: 5, hauPhau: 2, phuKhoa: 2, khac: 2 },
+    { hour: '11:00', daLieu: 2, hauPhau: 0, phuKhoa: 1, khac: 0 },
+  ];
+
+  const pieData = [
+    { name: 'Đang diễn ra', value: 10, color: '#FF9E69' },
+    { name: 'Đã hoàn thành', value: 15, color: '#2B4DED' },
+    { name: 'Đã hủy', value: 5, color: '#FFD1A7' },
+  ];
+
+  const areaData = [
+    { day: 'CN', count: 5 },
+    { day: 'T2', count: 8 },
+    { day: 'T3', count: 6 },
+    { day: 'T4', count: 10 },
+    { day: 'T5', count: 7 },
+    { day: 'T6', count: 4 },
+    { day: 'T7', count: 9 },
+  ];
+
+  const doctors = [
+    { name: 'Nguyễn Văn A', dept: 'Da liễu', status: 'busy' },
+    { name: 'Trần Thị B', dept: 'Phụ khoa', status: 'free' },
+  ];
+
+  const columns = [
+    {
+      title: 'Bác sĩ',
+      dataIndex: 'name',
+      key: 'name',
+      render: (text) => (
+        <div className="flex items-center gap-2">
+          <Avatar icon={<UserOutlined />} />
+          <span>{text}</span>
+        </div>
+      )
+    },
+    {
+      title: 'Chuyên khoa',
+      dataIndex: 'dept',
+      key: 'dept'
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => (
+        <span className={`px-2 py-1 rounded text-white text-xs ${status === 'busy' ? 'bg-[#79CFA6]' : 'bg-[#FF706F]'}`}>
+          {status === 'busy' ? 'Đang khám' : 'Trống'}
+        </span>
+      )
     }
-  }, [i18n]);
-
-  if (!mounted) {
-    return (
-      <Spin tip="Đang tải ngôn ngữ..." size="large">
-        <div className="h-screen flex items-center justify-center" />
-      </Spin>
-    );
-  }
-
-  const performanceData = [
-    { name: 'T2', value: 3 },
-    { name: 'T3', value: 5 },
-    { name: 'T4', value: 2 },
-    { name: 'T5', value: 6 },
-    { name: 'T6', value: 4 },
-    { name: 'T7', value: 1 },
   ];
-
-  const progressData = [
-    { name: t('dashboard.tasks_done'), value: 18 },
-    { name: 'Đang làm', value: 5 },
-    { name: 'Chưa bắt đầu', value: 3 },
-  ];
-
-  const COLORS = ['#00C49F', '#FFBB28', '#FF8042'];
 
   return (
-    <div className="p-6">
-      <div className='s-20 mb-5'>
-        <strong> {t('dashboard.home')}</strong>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-lg text-gray-500">TeleMedicine System For Phan Chau Trinh Hospital</p>
+        </div>
+        <RangePicker className="w-fit" defaultValue={[dayjs(), dayjs()]} />
       </div>
-      <div className="flex gap-6">
-        {/* 30% LEFT */}
-        <div className="w-1/3 flex flex-col gap-4">
-          <Card title={t('dashboard.welcome')}>
-            <p>{t('dashboard.welcome_msg')}</p>
-          </Card>
 
-          <Card title={t('dashboard.performance')}>
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+        {stats.map((s, i) => (
+          <Card key={i} className="flex items-center gap-4">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#D9F3EA]">
+              <UserOutlined className="text-xl text-gray-700" />
+            </div>
+            <div className="flex-1">
+              <div className="text-xl font-bold text-black">{s.value}</div>
+              <div className="text-sm text-black">{s.title}</div>
+              <div className={`inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs ${s.status === 'up' ? 'bg-[#D9F3EA]' : 'bg-[#ffe7e7]'}`}>
+                {s.status === 'up' ? <ArrowUpOutlined className="mr-1 text-[#a3a3a3]" /> : <ArrowDownOutlined className="mr-1 text-[#a3a3a3]" />}
+                {s.status === 'up' ? 'Tăng' : 'Giảm'}
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Bar chart */}
+      <Card title="SỐ CA KHÁM THEO GIỜ">
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={barData}>
+            <XAxis dataKey="hour" />
+            <YAxis />
+            <Tooltip />
+            <Bar dataKey="daLieu" fill="#3A4DE9" />
+            <Bar dataKey="hauPhau" fill="#E93A43" />
+            <Bar dataKey="phuKhoa" fill="#3AE93A" />
+            <Bar dataKey="khac" fill="#FF925F" />
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+
+      {/* Pie + Wave + Table */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Pie */}
+        <Card title="TÌNH TRẠNG CA KHÁM HÔM NAY">
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie
+                data={pieData}
+                cx="50%"
+                cy="50%"
+                label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                outerRadius={90}
+                dataKey="value"
+              >
+                {pieData.map((entry, i) => (
+                  <Cell key={`cell-${i}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </Card>
+
+        {/* Area + Table */}
+        <div className="space-y-6 col-span-1 lg:col-span-2">
+          <Card title="Số ca khám theo ngày">
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={performanceData}>
-                <XAxis dataKey="name" />
+              <AreaChart data={areaData}>
+                <XAxis dataKey="day" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="value" fill="#1890ff" />
-              </BarChart>
+                <Area type="monotone" dataKey="count" stroke="#8884d8" fill="#D9F3EA" />
+              </AreaChart>
             </ResponsiveContainer>
           </Card>
 
-          <Card title={t('dashboard.recent_activity')}>
-            <ul className="text-sm list-disc ml-4">
-              <li>Xem báo cáo tuần trước</li>
-              <li>Giao việc mới cho phòng A</li>
-              <li>Hoàn thành checklist 5 mục</li>
-            </ul>
-          </Card>
-        </div>
-
-        {/* 70% RIGHT */}
-        <div className="w-2/3 flex flex-col gap-4">
-          {/* div4: 4 box nhỏ */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card title={t('dashboard.tasks_total')}>
-              <p>24</p>
-            </Card>
-            <Card title={t('dashboard.tasks_done')}>
-              <p>18</p>
-            </Card>
-            <Card title={t('dashboard.value_total')}>
-              <p>120 triệu</p>
-            </Card>
-            <Card title={t('dashboard.value_avg')}>
-              <p>6 triệu</p>
-            </Card>
-          </div>
-
-          <Card title={t('dashboard.progress')}>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={progressData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label
-                >
-                  {progressData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </Card>
-
-          <Card title={t('dashboard.status_overview')}>
-            <p>To-do, In Progress, Done...</p>
-          </Card>
-
-          <Card title={t('dashboard.level_overview')}>
-            <p>Cao - Trung - Thấp</p>
-          </Card>
-
-          <Card title={t('dashboard.delayed_tasks')}>
-            <ul className="text-sm list-disc ml-4">
-              <li>Công việc A - 2 ngày trễ</li>
-              <li>Công việc B - 1 ngày trễ</li>
-            </ul>
+          <Card title="Danh sách bác sĩ">
+            <Table
+              pagination={false}
+              dataSource={doctors}
+              rowKey="name"
+              columns={columns}
+            />
           </Card>
         </div>
       </div>

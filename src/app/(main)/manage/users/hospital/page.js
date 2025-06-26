@@ -15,12 +15,6 @@ export default function HospitalUserPage() {
   const [selectedUser, setSelectedUser] = useState();
   const [isEditing, setIsEditing] = useState(false);
 
-  const getAuthTokenFromCookie = () => {
-    if (typeof document === 'undefined') return null;
-    const match = document.cookie.match(/token=([^;]+)/);
-    return match?.[1] ?? null;
-  };
-
   const mapStaffDetail = (d) => ({
     UserID: d.StaffID,
     Username: d.Username,
@@ -43,21 +37,19 @@ export default function HospitalUserPage() {
   });
 
   const fetchUsers = useCallback(async () => {
-    const token = getAuthTokenFromCookie();
-    if (!token) return console.warn('⚠️ Không tìm thấy token');
-
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/staff`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await fetch('/api/proxy/staff', {
+        method: 'GET',
+        credentials: 'include',
       });
 
       const data = await res.json();
       setUsers(Array.isArray(data)
         ? data.map((s) => ({
-            UserID: s.StaffID,
-            FullName: s.FullName,
-            avatar: s.Image ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${s.Image}` : null,
-          }))
+          UserID: s.StaffID,
+          FullName: s.FullName,
+          avatar: s.Image ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${s.Image}` : null,
+        }))
         : []);
     } catch (err) {
       console.error('❌ Error fetching staff list:', err);
@@ -67,12 +59,10 @@ export default function HospitalUserPage() {
   const handleSelectUser = async (user) => {
     if (!user) return setSelectedUser(null);
 
-    const token = getAuthTokenFromCookie();
-    if (!token) return console.warn('⚠️ Không tìm thấy token');
-
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/staff/${user.UserID}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await fetch(`/api/proxy/staff/${user.UserID}`, {
+        method: 'GET',
+        credentials: 'include',
       });
 
       if (!res.ok) return console.error('❌ Lỗi khi lấy chi tiết staff');
@@ -86,13 +76,10 @@ export default function HospitalUserPage() {
   };
 
   const handleAddOrUpdate = async (data) => {
-    const token = getAuthTokenFromCookie();
-    if (!token) return console.warn('⚠️ Không tìm thấy token');
-
     const isUpdate = Boolean(selectedUser?.UserID);
     const url = isUpdate
-      ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/staff/${selectedUser.UserID}`
-      : `${process.env.NEXT_PUBLIC_API_BASE_URL}/staff`;
+      ? `/api/proxy/staff/${selectedUser.UserID}`
+      : `/api/proxy/staff`;
     const method = isUpdate ? 'PUT' : 'POST';
 
     try {
@@ -109,8 +96,8 @@ export default function HospitalUserPage() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify(dataWithoutFiles),
       });
 
@@ -128,21 +115,21 @@ export default function HospitalUserPage() {
           formData.append('file', file);
           await fetch(uploadUrl, {
             method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
+            credentials: 'include',
             body: formData,
           });
         };
 
         if (avatarFile) {
-          await uploadFile(avatarFile, `${process.env.NEXT_PUBLIC_API_BASE_URL2}/upload/avatar/staff/${staffId}`);
+          await uploadFile(avatarFile, `/api/proxy/upload/avatar/staff/${staffId}`);
         }
 
         if (frontFile) {
-          await uploadFile(frontFile, `${process.env.NEXT_PUBLIC_API_BASE_URL2}/upload/cccd/front/staff/${staffId}`);
+          await uploadFile(frontFile, `/api/proxy/upload/cccd/front/staff/${staffId}`);
         }
 
         if (backFile) {
-          await uploadFile(backFile, `${process.env.NEXT_PUBLIC_API_BASE_URL2}/upload/cccd/back/staff/${staffId}`);
+          await uploadFile(backFile, `/api/proxy/upload/cccd/back/staff/${staffId}`);
         }
       }
 

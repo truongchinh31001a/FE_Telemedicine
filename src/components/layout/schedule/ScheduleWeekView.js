@@ -3,9 +3,8 @@
 import { Tooltip, Tag } from 'antd';
 import dayjs from 'dayjs';
 import { useMemo, useState, useEffect } from 'react';
-import ScheduleDetailModal from './ScheduleDetailModal';
 
-// 🎨 Hàm ánh xạ màu theo loại lịch
+// 🎨 Hàm ánh xạ màu theo loại lịch (sử dụng tạm mặc định vì API không có loại)
 const getColorByType = (type) => {
   switch (type) {
     case 'Khám': return '#86cefa';
@@ -21,8 +20,6 @@ const getColorByType = (type) => {
 const hours = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
 
 const ScheduleWeekView = ({ data = [], startDate }) => {
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  const [openModal, setOpenModal] = useState(false);
   const [currentHour, setCurrentHour] = useState(dayjs().format('HH:00'));
   const [today, setToday] = useState(dayjs().format('YYYY-MM-DD'));
 
@@ -35,40 +32,28 @@ const ScheduleWeekView = ({ data = [], startDate }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // 🌟 CHUYỂN DỮ LIỆU chuẩn theo {date, time} và xử lý cả startTime và endTime
+  // 🌟 CHUYỂN DỮ LIỆU chuẩn theo {date, time}
   const transformedData = useMemo(() => {
     return data.flatMap((item) => {
       const events = [];
-      
-      // Thêm 7 giờ vào thời gian bắt đầu và kết thúc (UTC+7)
-      const startTimeWithDate = dayjs(item.workDate).set('hour', dayjs(item.startTime, 'HH:mm').hour()).set('minute', dayjs(item.startTime, 'HH:mm').minute());
-      const endTimeWithDate = dayjs(item.workDate).set('hour', dayjs(item.endTime, 'HH:mm').hour()).set('minute', dayjs(item.endTime, 'HH:mm').minute());
+      const startTime = dayjs(item.work_date + 'T' + item.start_time);
+      const endTime = dayjs(item.work_date + 'T' + item.end_time);
+      let current = startTime;
 
-      let current = startTimeWithDate;  // Đã cộng 7 giờ vào startTime
-      const end = endTimeWithDate;  // Đã cộng 7 giờ vào endTime
+      if (!current.isValid() || !endTime.isValid()) return [];
 
-      // Kiểm tra nếu ngày tháng không hợp lệ
-      if (!current.isValid() || !end.isValid()) {
-        return []; // Nếu ngày tháng không hợp lệ, bỏ qua sự kiện này
-      }
-
-      // Tạo các sự kiện dựa trên startTime và endTime
-      while (current.isBefore(end)) {
+      while (current.isBefore(endTime)) {
         events.push({
-          id: item.scheduleId,
-          date: item.workDate, // workDate dạng YYYY-MM-DD
-          time: current.format('HH:00'), // Giờ dạng HH:00
-          doctorName: item.members?.join(', '),
-          department: item.departmentName,
-          type: item.eventType,
-          note: item.note,
-          startTime: item.startTime,
-          endTime: item.endTime,
-          room: item.room,
+          date: item.work_date,
+          time: current.format('HH:00'),
+          staffName: item.staff_name,
+          departmentName: item.department_name,
+          room: item.room || '',
+          startTime: item.start_time,
+          endTime: item.end_time,
         });
-        current = current.add(1, 'hour'); // Tăng giờ lên
+        current = current.add(1, 'hour');
       }
-
       return events;
     });
   }, [data]);
@@ -120,18 +105,14 @@ const ScheduleWeekView = ({ data = [], startDate }) => {
               >
                 {getScheduleAt(d, h).map((s) => (
                   <Tooltip
-                    key={s.id}
-                    title={`${s.doctorName} (${s.department}) - ${s.type}`}
+                    key={`${s.date}-${s.time}-${s.staffName}`}
+                    title={`${s.staffName} (${s.departmentName})`}
                   >
                     <Tag
-                      color={getColorByType(s.type)}
+                      color={getColorByType('Khám')}
                       className="absolute top-1 left-1 truncate max-w-full cursor-pointer"
-                      onClick={() => {
-                        setSelectedEvent(s);
-                        setOpenModal(true);
-                      }}
                     >
-                      {s.doctorName}
+                      {s.staffName}
                     </Tag>
                   </Tooltip>
                 ))}
@@ -140,13 +121,6 @@ const ScheduleWeekView = ({ data = [], startDate }) => {
           </div>
         ))}
       </div>
-
-      {/* Modal xem chi tiết */}
-      <ScheduleDetailModal
-        open={openModal}
-        data={selectedEvent}
-        onClose={() => setOpenModal(false)}
-      />
     </div>
   );
 };

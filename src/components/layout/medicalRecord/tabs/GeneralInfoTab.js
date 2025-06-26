@@ -49,15 +49,15 @@ const convertPatientToGeneralInfo = (raw) => {
     occupation: raw.PatientJob,
     contacts: raw.RelativeName
       ? [
-          {
-            index: 1,
-            patientCode: `BN${String(raw.PatientID).padStart(3, '0')}`,
-            fullName: raw.RelativeName,
-            relation: raw.Relationship,
-            cccd: '',
-            phone: raw.RelativePhone,
-          },
-        ]
+        {
+          index: 1,
+          patientCode: `BN${String(raw.PatientID).padStart(3, '0')}`,
+          fullName: raw.RelativeName,
+          relation: raw.Relationship,
+          cccd: '',
+          phone: raw.RelativePhone,
+        },
+      ]
       : [],
     insurances: [],
   };
@@ -74,21 +74,12 @@ export default function GeneralInfoTab({ patientId }) {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const token = getAuthTokenFromCookie();
-        if (!token) {
-          console.warn('⚠️ Không tìm thấy token');
-          return;
-        }
-
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/patients/${patientId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const res = await fetch(`/api/proxy/patients/${patientId}`, {
+          method: 'GET',
+          credentials: 'include', // gửi cookie
         });
 
-        if (!res.ok) {
-          throw new Error(`❌ HTTP ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`❌ HTTP ${res.status}`);
 
         const raw = await res.json();
         const converted = convertPatientToGeneralInfo(raw);

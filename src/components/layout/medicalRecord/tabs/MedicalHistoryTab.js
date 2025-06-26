@@ -33,11 +33,11 @@ export default function MedicalHistoryTab({ patientId }) {
     if (!patientId) return;
     setLoading(true);
     try {
-      const token = getAuthTokenFromCookie();
-      if (!token) return;
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/medical-records/patient/history/${patientId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await fetch(`/api/proxy/medical-records/patient/history/${patientId}`, {
+        method: 'GET',
+        credentials: 'include',
       });
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const raw = await res.json();
 

@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 
 const pageSize = 5;
 
-const MedicalRecordPanel = ({ records = [], onSelectRecord, selectedId }) => {
+const MedicalRecordPanel = ({ records = [], onSelectRecord, selectedId, onReload }) => {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState(null);
@@ -37,7 +37,18 @@ const MedicalRecordPanel = ({ records = [], onSelectRecord, selectedId }) => {
     <div className="w-[410px] bg-white border border-gray-200 rounded-lg p-4 space-y-4 mt-5">
       {/* Hàng 1: Nút thao tác */}
       <div className="flex justify-end gap-2">
-        <Button icon={<ReloadOutlined />} type="text" />
+        <div
+          onClick={onReload}
+          className="group flex items-center gap-1 cursor-pointer px-2 py-1 text-gray-600 hover:text-teal-600 transition-colors"
+        >
+          <span
+            className="overflow-hidden max-w-0 opacity-0 group-hover:max-w-[80px] group-hover:opacity-100 transition-all duration-300 whitespace-nowrap"
+          >
+            {t('common.reload')}
+          </span>
+
+          <ReloadOutlined className="text-lg" />
+        </div>
         <Button
           icon={<UploadOutlined />}
           style={{ borderColor: '#027bff', color: '#027bff' }}

@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 import utc from 'dayjs/plugin/utc';
-import debounce from 'lodash/debounce'; // Thêm debounce cho việc tìm kiếm
+import debounce from 'lodash/debounce';
 dayjs.extend(isBetween);
 dayjs.extend(utc);
 import { CalendarOutlined } from '@ant-design/icons';
@@ -21,7 +21,6 @@ import '@ant-design/v5-patch-for-react-19';
 
 import ScheduleWeekView from '@/components/layout/schedule/ScheduleWeekView';
 import AddScheduleModal from '@/components/layout/schedule/AddScheduleModal';
-import ScheduleDetailModal from '@/components/layout/schedule/ScheduleDetailModal';
 
 const { Title } = Typography;
 
@@ -36,8 +35,6 @@ const WorkSchedulePage = () => {
   const [allSchedules, setAllSchedules] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [showDetail, setShowDetail] = useState(false);
-  const [selectedSchedule, setSelectedSchedule] = useState(null);
 
   useEffect(() => {
     if (i18n.isInitialized) {
@@ -51,11 +48,10 @@ const WorkSchedulePage = () => {
     if (ready) {
       fetchSchedules();
     }
-  }, [ready]);
+  }, [ready, selectedDate, department]);
 
-  // Đảm bảo rằng việc tìm kiếm được thực hiện sau một thời gian nhập liệu
   const handleSearch = debounce(() => {
-    const startOfWeek = selectedDate.startOf('week').add(1, 'day'); // Điều chỉnh tuần bắt đầu từ Thứ Hai
+    const startOfWeek = selectedDate.startOf('week').add(1, 'day');
     const endOfWeek = startOfWeek.add(6, 'day');
 
     const filtered = allSchedules.filter((item) => {
@@ -63,13 +59,12 @@ const WorkSchedulePage = () => {
       return (
         itemDate.isBetween(startOfWeek, endOfWeek, 'day', '[]') &&
         (!department || item.departmentName?.toLowerCase().includes(department.toLowerCase())) &&
-        (!mode || item.eventType?.toLowerCase() === mode.toLowerCase()) &&
-        (!doctorName || item.members?.some(name => name.toLowerCase().includes(doctorName.toLowerCase())))
+        (!doctorName || item.staffName?.toLowerCase().includes(doctorName.toLowerCase()))
       );
     });
 
     setFilteredData(filtered);
-  }, 300); // Đặt thời gian debounce là 300ms
+  }, 300);
 
   useEffect(() => {
     handleSearch();
@@ -77,24 +72,29 @@ const WorkSchedulePage = () => {
 
   const fetchSchedules = async () => {
     try {
-      const response = await fetch('/api/schedules', {
+      const fromDate = selectedDate.startOf('week').add(1, 'day').format('YYYY-MM-DD');
+      const toDate = selectedDate.endOf('week').add(1, 'day').format('YYYY-MM-DD');
+      const departmentMap = { 'nội': 1, 'ngoại': 2 };
+      const departmentId = departmentMap[department] || 2;
+
+      const response = await fetch(`/api/proxy/schedule/available-slots?departmentId=${departmentId}&fromDate=${fromDate}&toDate=${toDate}`, {
         method: 'GET',
         credentials: 'include',
       });
-  
-      if (!response.ok) throw new Error('Failed to fetch schedules');
-  
-      const rawSchedules = await response.json();
-  
-      const cleanSchedules = rawSchedules.map(schedule => ({
-        ...schedule,
-        startTime: dayjs.utc(schedule.startTime).format('HH:mm'), // ✔️ Dùng utc() để không lệch giờ
-        endTime: dayjs.utc(schedule.endTime).format('HH:mm'),
-        workDate: dayjs.utc(schedule.workDate).format('YYYY-MM-DD'), // ✔️ Vẫn format workDate
-        members: schedule.members.map(member => member.fullName) // ✔️ Lấy fullName
+
+      if (!response.ok) throw new Error('Failed to fetch available slots');
+
+      const data = await response.json();
+
+      const formatted = data.map(item => ({
+        workDate: item.work_date,
+        startTime: item.start_time,
+        endTime: item.end_time,
+        staffName: item.staff_name,
+        departmentName: item.department_name,
       }));
-      
-      setAllSchedules(cleanSchedules);
+
+      setAllSchedules(formatted);
     } catch (error) {
       console.error(error);
       message.error('Lỗi tải lịch');
@@ -122,23 +122,6 @@ const WorkSchedulePage = () => {
     } catch (error) {
       console.error(error);
       message.error('Tạo lịch thất bại!');
-    }
-  };
-
-  const handleDeleteSchedule = async (scheduleId) => {
-    try {
-      const response = await fetch(`/api/schedules/${scheduleId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (!response.ok) throw new Error('Failed to delete schedule');
-
-      message.success('Xóa lịch thành công');
-      fetchSchedules();
-    } catch (error) {
-      console.error(error);
-      message.error('Xóa lịch thất bại');
     }
   };
 
@@ -220,22 +203,8 @@ const WorkSchedulePage = () => {
         <ScheduleWeekView
           data={filteredData}
           startDate={selectedDate}
-          onSelectSchedule={(schedule) => {
-            setSelectedSchedule(schedule);
-            setShowDetail(true);
-          }}
         />
       </div>
-
-      {/* Modal chi tiết */}
-      <ScheduleDetailModal
-        open={showDetail}
-        onClose={() => setShowDetail(false)}
-        data={selectedSchedule}
-        onDelete={handleDeleteSchedule}
-        onEdit={(schedule) => {
-        }}
-      />
     </div>
   );
 };

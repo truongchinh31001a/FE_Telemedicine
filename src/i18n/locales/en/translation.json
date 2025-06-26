@@ -13,6 +13,7 @@
     "logout": "Logout",
     "login_success": "Login successful!",
     "login_failed": "Login failed. Please try again.",
+    "not_authorized": "You are not authorized to access this page.",
     "common": {
         "reload": "Reload"
     },

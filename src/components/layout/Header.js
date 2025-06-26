@@ -11,9 +11,13 @@ export default function Header({ collapsed, onToggle }) {
   const { fullName, loading } = useAuth(); // Sử dụng hook để lấy thông tin người dùng
 
   // Hàm xử lý đăng xuất
-  const handleLogout = () => {
-    Cookies.remove('token');  // Xóa token khỏi cookie
-    router.push('/auth');  // Điều hướng về trang đăng nhập
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); // Gọi API đăng xuất
+      router.push('/auth'); // hoặc `/vi/auth` tùy locale
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
   };
 
   return (

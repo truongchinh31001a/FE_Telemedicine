@@ -27,12 +27,10 @@ export default function MedicalHistoryEditForm({
             const token = document.cookie.match(/token=([^;]+)/)?.[1];
             if (!token) return;
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/medical-records/history/${type}/${patientId}`, {
+            const res = await fetch(`/api/proxy/medical-records/history/${type}/${patientId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     Status: values.status,
                     Note: values.note,

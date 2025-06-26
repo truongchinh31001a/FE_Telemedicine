@@ -14,13 +14,6 @@ export default function PatientUserPage() {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState();
 
-  // Lấy token từ cookie
-  const getAuthTokenFromCookie = () => {
-    if (typeof document === 'undefined') return null;
-    const match = document.cookie.match(/token=([^;]+)/);
-    return match?.[1] ?? null;
-  };
-
   // Map danh sách bệnh nhân
   const mapPatient = (p) => ({
     UserID: p.PatientID,
@@ -49,12 +42,11 @@ export default function PatientUserPage() {
   });
 
   const fetchUsers = useCallback(async () => {
-    const token = getAuthTokenFromCookie();
-    if (!token) return console.warn('⚠️ Không tìm thấy token');
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/patients`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await fetch('/api/proxy/patients', {
+        method: 'GET',
+        credentials: 'include',
       });
 
       const data = await res.json();
@@ -67,12 +59,10 @@ export default function PatientUserPage() {
   const handleSelectUser = async (user) => {
     if (!user) return setSelectedUser(null);
 
-    const token = getAuthTokenFromCookie();
-    if (!token) return console.warn('⚠️ Không tìm thấy token');
-
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/patients/${user.UserID}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await fetch(`/api/proxy/patients/${user.UserID}`, {
+        method: 'GET',
+        credentials: 'include',
       });
 
       if (!res.ok) return console.error('❌ Lỗi khi lấy chi tiết bệnh nhân');
@@ -85,9 +75,6 @@ export default function PatientUserPage() {
   };
 
   const handleAddOrUpdate = async (data) => {
-    const token = getAuthTokenFromCookie();
-    if (!token) return console.warn('⚠️ Không tìm thấy token');
-
     const isUpdate = Boolean(selectedUser?.UserID);
     const formatDate = (date) => (date ? dayjs(date).format('YYYY-MM-DD') : '');
 
@@ -109,13 +96,13 @@ export default function PatientUserPage() {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/patients${isUpdate ? `/${selectedUser.UserID}` : ''}`,
+        `/api/proxy/patients${isUpdate ? `/${selectedUser.UserID}` : ''}`,
         {
           method: isUpdate ? 'PUT' : 'POST',
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
           body: JSON.stringify(payload),
         }
       );

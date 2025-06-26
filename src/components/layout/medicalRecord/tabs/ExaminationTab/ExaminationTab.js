@@ -7,12 +7,6 @@ import { useTranslation } from 'react-i18next';
 import VitalsForm from './VitalsForm.js';
 import PrescriptionForm from './PrescriptionForm.js';
 
-const getAuthTokenFromCookie = () => {
-  if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(/token=([^;]+)/);
-  return match?.[1] ?? null;
-};
-
 const formatVitals = (vital) => {
   if (!vital) return [];
   return [
@@ -45,9 +39,8 @@ export default function ExaminationTab({ patientId }) {
     if (!patientId) return;
     setLoading(true);
     try {
-      const token = getAuthTokenFromCookie();
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/medical-records/records/${patientId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await fetch(`/api/proxy/medical-records/record/${patientId}`, {
+        credentials: 'include',
       });
       const data = await res.json();
       setExams(
@@ -75,23 +68,12 @@ export default function ExaminationTab({ patientId }) {
     setCollapsed(true);
     setLoading(true);
     try {
-      const token = getAuthTokenFromCookie();
       const [recordListRes, vitalsRes, presRes, labRes, imagingRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/medical-records/patient/${patientId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/medical-records/patient/vitals/${exam.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/prescriptions/${exam.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/lab-tests/${exam.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/imaging-tests/${exam.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+        fetch(`/api/proxy/medical-records/patient/${patientId}`, { credentials: 'include' }),
+        fetch(`/api/proxy/medical-records/patient/vitals/${exam.id}`, { credentials: 'include' }),
+        fetch(`/api/proxy/medical-records/patient/prescriptions/${exam.id}`, { credentials: 'include' }),
+        fetch(`/api/proxy/medical-records/patient/lab-tests/${exam.id}`, { credentials: 'include' }),
+        fetch(`/api/proxy/medical-records/patient/imaging-tests/${exam.id}`, { credentials: 'include' }),
       ]);
 
       const [recordList, vitalsData, prescriptionData, labTestsData, imagingTestsData] = await Promise.all([

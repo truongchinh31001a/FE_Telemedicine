@@ -125,7 +125,7 @@ export default function PrescriptionForm({ recordId, appointmentId, initialPresc
             }
 
             if (createList.length > 0 && currentRecordId) {
-                await fetch(`http://192.168.1.199:3000/prescriptions/${currentRecordId}`, {
+                await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/prescriptions/${currentRecordId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

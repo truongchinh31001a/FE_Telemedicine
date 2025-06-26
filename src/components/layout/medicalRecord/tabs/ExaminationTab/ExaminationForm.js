@@ -18,10 +18,8 @@ export default function ExaminationForm({ onSuccess, patientId, measuredBy = 2, 
     useEffect(() => {
         const fetchDrugs = async () => {
             try {
-                const token = document.cookie.match(/token=([^;]+)/)?.[1];
-                if (!token) return;
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/drug`, {
-                    headers: { Authorization: `Bearer ${token}` },
+                const res = await fetch('/api/proxy/drug', {
+                    credentials: 'include',
                 });
                 const data = await res.json();
                 const options = data.map((d) => ({ label: d.DrugName, value: d.DrugID }));
@@ -67,9 +65,6 @@ export default function ExaminationForm({ onSuccess, patientId, measuredBy = 2, 
     }, [initialValues, drugOptions]);
 
     const handleSubmit = async (values) => {
-        const token = document.cookie.match(/token=([^;]+)/)?.[1];
-        if (!token) return;
-
         const {
             temperature, spo2, note,
             date, symptoms, icdMain, solution, prescriptionList = [],
@@ -78,77 +73,77 @@ export default function ExaminationForm({ onSuccess, patientId, measuredBy = 2, 
         try {
             const method = recordId ? 'PUT' : 'POST';
             const url = recordId
-                ? `http://192.168.1.199:3000/medical-records/${recordId}`
-                : 'http://192.168.1.199:3000/medical-records/';
+                ? `/api/proxy/medical-records/${recordId}`
+                : `/api/proxy/medical-records/`;
 
             const res = await fetch(url, {
                 method,
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     PatientID: patientId,
-                    CreatedDate: dayjs(date).format('YYYY-MM-DD'),
+                    CreatedDate: date ? date.toISOString() : undefined,
                     Symptoms: symptoms,
                     DiagnosisCode: icdMain,
-                })
+                }),
             });
 
             const data = await res.json();
             const newRecordId = recordId || data?.RecordID;
             if (!newRecordId) throw new Error('Không xác định được recordId');
 
-            await fetch(`http://192.168.1.199:3000/medical-records/patient/vitals/${newRecordId}`, {
+            await fetch(`/api/proxy/medical-records/patient/vitals/${newRecordId}`, {
                 method: 'PUT',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    RecordID: newRecordId,
-                    MeasuredBy: measuredBy,
-                    Note: note || '',
-                    SpO2: spo2,
-                    Temperature: temperature
-                })
+                    vitals: [
+                        { label: 'Temperature', value: temperature },
+                        { label: 'SpO2', value: spo2 },
+                        { label: 'Note', value: note }
+                    ]
+                }),
             });
 
             if (solution === 'create') {
-                for (const item of prescriptionList) {
-                    if (item.detailId) {
-                        await fetch(`http://192.168.1.199:3000/prescriptions/detail/${recordId}`, {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                Authorization: `Bearer ${token}`,
-                            },
-                            body: JSON.stringify({
-                                DrugID: item.drugId,
-                                unit: item.unit,
-                                quantity: item.quantity,
-                                timeOfDay: item.timeOfDay,
-                                mealTiming: item.mealTiming,
-                                note: item.note
-                            }),
-                        });
-                    } else {
-                        await fetch(`http://192.168.1.199:3000/prescriptions/${newRecordId}`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                Authorization: `Bearer ${token}`,
-                            },
-                            body: JSON.stringify([{
-                                drugId: item.drugId,
-                                unit: item.unit,
-                                quantity: item.quantity,
-                                timeOfDay: item.timeOfDay,
-                                mealTiming: item.mealTiming,
-                                note: item.note
-                            }]),
-                        });
-                    }
+                const newPres = prescriptionList.filter(p => !p.detailId).map(p => ({
+                    drugId: p.drugId,
+                    unit: p.unit,
+                    quantity: p.quantity,
+                    timeOfDay: p.timeOfDay
+                }));
+                const updatePres = prescriptionList.filter(p => p.detailId).map(p => ({
+                    DetailID: p.detailId,
+                    DrugID: p.drugId,
+                    Unit: p.unit,
+                    Quantity: p.quantity,
+                    TimeOfDay: p.timeOfDay
+                }));
+
+                if (newPres.length > 0) {
+                    await fetch(`/api/proxy/prescriptions/${newRecordId}`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(newPres),
+                    });
+                }
+
+                if (updatePres.length > 0) {
+                    await fetch(`/api/proxy/prescriptions/details`, {
+                        method: 'PUT',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(updatePres),
+                    });
                 }
             }
 

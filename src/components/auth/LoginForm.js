@@ -2,89 +2,84 @@
 
 import { useState, useEffect } from 'react';
 import { Input, Button, Checkbox } from 'antd';
-import { GoogleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
-import { useRouter } from 'next/navigation'; // 🆕
+import { useRouter } from 'next/navigation';
 import '@ant-design/v5-patch-for-react-19';
-import Cookies from 'js-cookie';
 
 export default function LoginForm({ onForgotClick }) {
-  const { t, i18n } = useTranslation();
-  const [mounted, setMounted] = useState(false);  // Use this state to delay rendering until client-side
-  const router = useRouter(); // 🆕
+  const { t } = useTranslation();
+  const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
-  // State để quản lý form data
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
 
-  // Hàm xử lý sự kiện thay đổi input
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, checked } = e.target;
     if (name === 'username') setUsername(value);
     if (name === 'password') setPassword(value);
-    if (name === 'remember') setRemember(e.target.checked);
+    if (name === 'remember') setRemember(checked);
   };
 
-  // Hàm xử lý submit form
   const onSubmit = async (e) => {
-    e.preventDefault(); // Ngừng hành vi mặc định của form
+    e.preventDefault();
 
     try {
-      // Gửi dữ liệu đăng nhập đến API
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
-        // credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
       });
 
       const result = await response.json();
 
       if (response.ok) {
-        const { access_token } = result;  // Giả sử API trả về token với key là 'access_token'
-        Cookies.set('token', access_token, {
-          expires: 1,
-          secure: location.protocol === 'https:',
-          sameSite: 'Lax',
+        const { access_token } = result;
+
+        // Gửi access_token về server để set cookie HttpOnly
+        const setCookieResponse = await fetch(`/api/auth/set-token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: access_token }),
+          credentials: 'include',
         });
-        toast.success(t('login_success'));  // Chỉ thông báo thành công khi login thành công
-        setTimeout(() => {
-          router.push('/'); // Điều hướng sau khi login thành công
-        }, 500);
+
+        if (setCookieResponse.ok) {
+          toast.success(t('login_success'));
+          setTimeout(() => {
+            router.push('/');
+          }, 500);
+        } else {
+
+          if (setCookieResponse.status === 403) {
+            toast.error(t('not_authorized')); 
+          } else {
+            toast.error(t('login_failed'));
+          }
+        }
+
       } else {
-        toast.error(t('login_failed'));  // Nếu đăng nhập thất bại, chỉ báo lỗi
+        toast.error(t('login_failed'));
       }
     } catch (error) {
-      toast.error(t('login_failed'));  // Nếu có lỗi khi gửi request
+      toast.error(t('login_failed'));
     }
   };
 
-  // Đảm bảo rằng component chỉ được render khi mounted trên client
   useEffect(() => {
-    setMounted(true);  // Khi component được mount trên client, cập nhật mounted thành true
+    setMounted(true);
   }, []);
 
-  if (!mounted) return null;  // Không render trước khi component được mount
+  if (!mounted) return null;
 
   return (
     <form onSubmit={onSubmit} className="w-[350px] h-[360px] animate-fade-in space-y-6 bg-white p-6 rounded-lg">
       <div className="space-y-4">
         <div>
           <label className="block mb-1 text-sm font-medium text-gray-700">{t('username')}</label>
-          <Input
-            name="username"
-            value={username}
-            onChange={handleChange}
-            placeholder={t('username')}
-            className="py-2"
-          />
+          <Input name="username" value={username} onChange={handleChange} placeholder={t('username')} className="py-2" />
         </div>
 
         <div>
@@ -113,15 +108,6 @@ export default function LoginForm({ onForgotClick }) {
         <Button type="primary" htmlType="submit" block size="large">
           {t('login')}
         </Button>
-
-        {/* <Button
-          icon={<GoogleOutlined />}
-          block
-          onClick={() => {}}
-          size="large"
-        >
-          {t('login_with_google')}
-        </Button> */}
       </div>
     </form>
   );

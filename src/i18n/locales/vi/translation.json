@@ -13,6 +13,7 @@
     "logout": "Đăng xuất",
     "login_success": "Đăng nhập thành công!",
     "login_failed": "Đăng nhập thất bại. Vui lòng thử lại.",
+    "not_authorized": "Bạn không được phép truy cập trang này.",
     "common": {
         "reload": "Tải lại"
     },
