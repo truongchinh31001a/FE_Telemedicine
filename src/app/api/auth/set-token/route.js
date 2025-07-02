@@ -26,7 +26,6 @@ export async function POST(req) {
       maxAge: 60 * 60,
     });
 
-    console.log('✅ Token set with secure =', isSecure);
     return res;
   } catch (error) {
     console.error('❌ Error validating token:', error);

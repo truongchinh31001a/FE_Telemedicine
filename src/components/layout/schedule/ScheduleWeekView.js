@@ -4,7 +4,7 @@ import { Tooltip, Tag } from 'antd';
 import dayjs from 'dayjs';
 import { useMemo, useState, useEffect } from 'react';
 
-// 🎨 Hàm ánh xạ màu theo loại lịch (sử dụng tạm mặc định vì API không có loại)
+// 🎨 Hàm ánh xạ màu theo loại lịch (có thể tùy chỉnh sau)
 const getColorByType = (type) => {
   switch (type) {
     case 'Khám': return '#86cefa';
@@ -32,25 +32,25 @@ const ScheduleWeekView = ({ data = [], startDate }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // 🌟 CHUYỂN DỮ LIỆU chuẩn theo {date, time}
+  // 🌟 CHUYỂN DỮ LIỆU: sử dụng đúng trường từ WorkSchedulePage
   const transformedData = useMemo(() => {
     return data.flatMap((item) => {
       const events = [];
-      const startTime = dayjs(item.work_date + 'T' + item.start_time);
-      const endTime = dayjs(item.work_date + 'T' + item.end_time);
+      const startTime = dayjs(item.workDate + 'T' + item.startTime);
+      const endTime = dayjs(item.workDate + 'T' + item.endTime);
       let current = startTime;
 
       if (!current.isValid() || !endTime.isValid()) return [];
 
       while (current.isBefore(endTime)) {
         events.push({
-          date: item.work_date,
+          date: item.workDate,
           time: current.format('HH:00'),
-          staffName: item.staff_name,
-          departmentName: item.department_name,
+          staffName: item.staffName,
+          departmentName: item.departmentName,
           room: item.room || '',
-          startTime: item.start_time,
-          endTime: item.end_time,
+          startTime: item.startTime,
+          endTime: item.endTime,
         });
         current = current.add(1, 'hour');
       }

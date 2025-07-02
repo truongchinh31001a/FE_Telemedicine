@@ -3,6 +3,7 @@
 import { Modal, Descriptions, Button, Space, Tag } from 'antd';
 import { useTranslation } from 'react-i18next';
 import JoinRoomButton from '../JoinButton';
+import dayjs from 'dayjs';
 
 const AppointmentDetailModal = ({ open, onClose, data, onApprove, onReject, actionLoading }) => {
     const { t } = useTranslation();
@@ -23,8 +24,8 @@ const AppointmentDetailModal = ({ open, onClose, data, onApprove, onReject, acti
             okText: t('appointment_detail.approve'),
             cancelText: t('appointment_detail.cancel'),
             onOk: async () => {
-                await onApprove(); // 🛠️ Xử lý Approve
-                onClose();          // ✅ Đóng Modal sau khi xử lý xong
+                await onApprove();
+                onClose();
             },
         });
     };
@@ -37,8 +38,8 @@ const AppointmentDetailModal = ({ open, onClose, data, onApprove, onReject, acti
             okType: 'danger',
             cancelText: t('appointment_detail.cancel'),
             onOk: async () => {
-                await onReject(); // 🛠️ Xử lý Reject
-                onClose();        // ✅ Đóng Modal sau khi xử lý xong
+                await onReject();
+                onClose();
             },
         });
     };
@@ -55,58 +56,51 @@ const AppointmentDetailModal = ({ open, onClose, data, onApprove, onReject, acti
             {data && (
                 <Descriptions bordered column={1} size="small">
                     <Descriptions.Item label={t('appointment_detail.doctor')}>
-                        {data.StaffName || `BS ${data.StaffID}`}
+                        {data.doctor_name || `BS ${data.staff_id}`}
                     </Descriptions.Item>
                     <Descriptions.Item label={t('appointment_detail.patient')}>
-                        {data.PatientName || `BN ${data.PatientID}`}
+                        {data.patient_name || `BN ${data.patient_id}`}
                     </Descriptions.Item>
                     <Descriptions.Item label={t('appointment_detail.date')}>
-                        {data.WorkDate ? new Date(data.WorkDate).toLocaleDateString() : t('appointment_detail.no_date')}
+                        {data.work_date ? dayjs(data.work_date).format('DD/MM/YYYY') : t('appointment_detail.no_date')}
                     </Descriptions.Item>
                     <Descriptions.Item label={t('appointment_detail.time')}>
-                        {data.StartTime && data.EndTime
-                            ? `${new Date(data.StartTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(data.EndTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                        {data.start_time && data.end_time
+                            ? `${dayjs(data.start_time, 'HH:mm:ss').format('HH:mm')} - ${dayjs(data.end_time, 'HH:mm:ss').format('HH:mm')}`
                             : t('appointment_detail.no_time')}
                     </Descriptions.Item>
                     <Descriptions.Item label={t('appointment_detail.type')}>
-                        {data.Type || t('appointment_detail.default_type')}
+                        {data.type || t('appointment_detail.default_type')}
                     </Descriptions.Item>
                     <Descriptions.Item label={t('appointment_detail.room')}>
-                        {data.Room || t('appointment_detail.default_room')}
+                        {data.room || t('appointment_detail.default_room')}
                     </Descriptions.Item>
                     <Descriptions.Item label={t('appointment_detail.status')}>
-                        <Tag color={getStatusTagColor(data.Status)}>
-                            {data.Status?.toUpperCase()}
+                        <Tag color={getStatusTagColor(data.status)}>
+                            {data.status?.toUpperCase()}
                         </Tag>
                     </Descriptions.Item>
                     <Descriptions.Item label={t('appointment_detail.note')}>
-                        {data.Note || t('appointment_detail.no_note')}
+                        {data.note || t('appointment_detail.no_note')}
                     </Descriptions.Item>
                 </Descriptions>
             )}
 
             <Space className="mt-4" align="center">
                 <Button
-                    type="primary"
-                    onClick={handleApprove}
-                    loading={actionLoading} // ✅ Nút loading khi approve/reject
-                >
-                    {t('appointment_detail.approve')}
-                </Button>
-                <Button
                     danger
                     onClick={handleReject}
-                    loading={actionLoading} // ✅ Nút loading khi approve/reject
+                    loading={actionLoading}
                 >
                     {t('appointment_detail.reject')}
                 </Button>
-                {data && data.Status?.toLowerCase() === 'confirmed' && (
+                {data && data.status?.toLowerCase() === 'đã duyệt' && (
                     <JoinRoomButton
-                        roomName={data.Room}
-                        userName={data.StaffName}
-                        patientId={data.PatientID}
-                        recordId={data.RecordID}
-                        appointmentId={data.AppointmentID}
+                        roomName={data.room}
+                        userName={data.doctor_name}
+                        patientId={data.patient_id}
+                        recordId={data.record_id}
+                        appointmentId={data.appointment_id}
                         openInNewTab={true}
                         buttonText={t('appointment_detail.join_room')}
                         type="default"
